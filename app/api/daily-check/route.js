@@ -1,5 +1,9 @@
 import { runDailyCheck } from '../../utils/dailyCheck.js';
 
+export async function GET(request) {
+  return POST(request);
+}
+
 export async function POST(request) {
   try {
     console.log('Running daily check via API...');

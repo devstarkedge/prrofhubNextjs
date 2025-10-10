@@ -12,7 +12,7 @@ function App() {
 
   return (
     <div className="p-6 max-w-[1400px] m-auto">
-      <h2 className="text-3xl font-bold text-center mb-6">{selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}'s Time Entries` : 'My Time Entries'}</h2>
+      <h2 className="text-3xl font-bold text-center mb-6">{selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}'s TimeSheet` : 'My TimeSheet'}</h2>
 
       <div className="flex gap-4 mb-6">
         <button

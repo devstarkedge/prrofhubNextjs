@@ -232,6 +232,12 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId }) => {
     });
   };
 
+  const handleEmployeeClick = (empId) => {
+    setActiveButton("Employee");
+    setSelectedId(empId);
+    setView("details");
+  };
+
   const renderDepartment = (dept) => {
     const isOpen = dropdownOpen === dept.id;
     const isLoading = downloadLoading.has(dept.id);
@@ -251,7 +257,18 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId }) => {
       const emp = employeeMap[empId];
       const time = timeData[empId] || { totalLogged: "-", totalEstimated: "-" };
       return emp ? {
-        id: emp.id,
+        id: (
+          <a
+            className="hover:underline"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              handleEmployeeClick(emp.id);
+            }}
+          >
+            {emp.id}
+          </a>
+        ),
         // photo: <img src={emp.image_url} alt={emp.first_name} className="w-10 h-10 rounded-full" />,
         name: `${emp.first_name} ${emp.last_name}`,
         email: emp.email,

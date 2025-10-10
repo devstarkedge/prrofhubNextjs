@@ -25,10 +25,8 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId }) => {
   const { data: timeEntries, loading: loadingEntries, refetch } = useTimeEntries(selectedId, fromDate, toDate);
 
   useEffect(() => {
-    if (view === "list") {
-      fetchEmployees();
-    }
-  }, [view]);
+    fetchEmployees();
+  }, []);
 
   useEffect(() => {
     if (employees.length > 0) {

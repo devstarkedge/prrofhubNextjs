@@ -2,8 +2,7 @@
   "crons": [
     {
       "path": "/api/daily-check",
-      "schedule": "55 11 * * *",
-      "environment": "production"
+      "schedule": "55 11 * * *"
     }
   ]
 }

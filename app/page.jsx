@@ -8,10 +8,11 @@ function App() {
   const [activeButton, setActiveButton] = useState("Employee");
   const [view, setView] = useState("list");
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   return (
     <div className="p-6 max-w-[1400px] m-auto">
-      <h2 className="text-3xl font-bold text-center mb-6">My Time Entries</h2>
+      <h2 className="text-3xl font-bold text-center mb-6">{selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}'s Time Entries` : 'My Time Entries'}</h2>
 
       <div className="flex gap-4 mb-6">
         <button
@@ -24,6 +25,7 @@ function App() {
             setActiveButton("Employee");
             setView("list");
             setSelectedId(null);
+            setSelectedEmployee(null);
           }}
         >
           Employee
@@ -34,7 +36,11 @@ function App() {
               ? "bg-blue-500 text-white"
               : "bg-gray-200 text-black"
           }`}
-          onClick={() => setActiveButton("Department")}
+          onClick={() => {
+            setActiveButton("Department");
+            setSelectedId(null);
+            setSelectedEmployee(null);
+          }}
         >
           Department
         </button>
@@ -47,6 +53,7 @@ function App() {
           setView={setView}
           selectedId={selectedId}
           setSelectedId={setSelectedId}
+          setSelectedEmployee={setSelectedEmployee}
         />
       )}
 
@@ -55,6 +62,7 @@ function App() {
           setActiveButton={setActiveButton}
           setView={setView}
           setSelectedId={setSelectedId}
+          setSelectedEmployee={setSelectedEmployee}
         />
       )}
     </div>

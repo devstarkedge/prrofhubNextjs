@@ -9,7 +9,7 @@ import DateFilter from "../components/ui/DateFilter";
 import DownloadDropdown from "../components/ui/DownloadDropdown";
 import DataTable from "../components/ui/DataTable";
 
-const DepartmentList = ({ setActiveButton, setView, setSelectedId }) => {
+const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEmployee }) => {
   const [departments, setDepartments] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -233,6 +233,8 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId }) => {
   };
 
   const handleEmployeeClick = (empId) => {
+    const employee = employees.find(emp => emp.id === empId);
+    setSelectedEmployee(employee);
     setActiveButton("Employee");
     setSelectedId(empId);
     setView("details");

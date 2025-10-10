@@ -9,7 +9,7 @@ import Spinner from "../components/ui/Spinner";
 import DateFilter from "../components/ui/DateFilter";
 import DownloadDropdown from "../components/ui/DownloadDropdown";
 
-const EmployeeList = ({ view, setView, selectedId, setSelectedId }) => {
+const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmployee }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [todoCounts, setTodoCounts] = useState({});
@@ -103,11 +103,14 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId }) => {
   };
 
   const handleClick = (id) => {
+    const employee = employees.find(emp => emp.id === id);
+    setSelectedEmployee(employee);
     setSelectedId(id);
     setView("details");
   };
 
   const handleBack = () => {
+    setSelectedEmployee(null);
     setSelectedId(null);
     setView("list");
   };
@@ -226,7 +229,12 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId }) => {
             onChange={(e) => {
               const id = e.target.value ? parseInt(e.target.value) : null;
               if (id) {
+                const employee = employees.find(emp => emp.id === id);
+                setSelectedEmployee(employee);
                 setSelectedId(id);
+              } else {
+                setSelectedEmployee(null);
+                setSelectedId(null);
               }
             }}
             className="px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"

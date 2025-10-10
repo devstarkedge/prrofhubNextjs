@@ -1,8 +1,8 @@
 import cron from 'node-cron';
 import { runDailyCheck } from './app/utils/dailyCheck.js';
 
-// Schedule the daily check to run every day at 5:13 PM
-cron.schedule('13 17 * * *', async () => {
+// Schedule the daily check to run every day at 10:00 PM
+cron.schedule('0 22 * * *', async () => {
   console.log('Running scheduled daily check...');
   try {
     await runDailyCheck();
@@ -14,4 +14,4 @@ cron.schedule('13 17 * * *', async () => {
   timezone: "Asia/Kolkata" 
 });
 
-console.log('Cron job scheduled: Daily check at 5:13 PM daily.');
+console.log('Cron job scheduled: Daily check at 10:00 PM daily.');

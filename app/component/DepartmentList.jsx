@@ -248,7 +248,7 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId }) => {
       // { key: "photo", label: "Photo" },
       { key: "name", label: "Name" },
       { key: "email", label: "Email" },
-      { key: "title", label: "Title" },
+      // { key: "title", label: "Title" },
       { key: "totalLogged", label: "Total Logged Time" },
       { key: "totalEstimated", label: "Estimated Time" },
     ];
@@ -272,7 +272,7 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId }) => {
         // photo: <img src={emp.image_url} alt={emp.first_name} className="w-10 h-10 rounded-full" />,
         name: `${emp.first_name} ${emp.last_name}`,
         email: emp.email,
-        title: emp.title || "—",
+        // title: emp.title || "—",
         totalLogged: timeLoadingDepts.has(dept.id) ? <Spinner /> : time.totalLogged,
         totalEstimated: timeLoadingDepts.has(dept.id) ? <Spinner /> : time.totalEstimated,
       } : null;
@@ -280,7 +280,6 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId }) => {
 
     const footer = [
       "Total",
-      "",
       "",
       "",
       (() => {

@@ -5,19 +5,23 @@ const transporter = nodemailer.createTransport({
   port: process.env.EMAIL_PORT || 587,
   secure: false, 
   auth: {
-    user:" shubhamdhatwalia3@gmail.com",
-    pass:  "vvug ktrm viyt tlpy"
+    user: "devteststark@gmail.com",
+    pass:  "zaff wvda igzo qtoh"
   },
 });
 
-export const sendEmail = async (to, subject, text) => {
+export const sendEmail = async (to, subject, text, html = null) => {
   try {
-    await transporter.sendMail({
+    const mailOptions = {
       from: `"Time Logger Bot" <shubhamdhatwalia3@gmail.com>`,
       to,
       subject,
       text,
-    });
+    };
+    if (html) {
+      mailOptions.html = html;
+    }
+    await transporter.sendMail(mailOptions);
     console.log(`Email sent successfully to ${to}`);
   } catch (error) {
     console.error(`Failed to send email to ${to}:`, error.message);

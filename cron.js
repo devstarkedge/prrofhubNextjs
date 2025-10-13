@@ -11,7 +11,7 @@ cron.schedule('0 22 * * *', async () => {
     console.error('Error during scheduled daily check:', error);
   }
 }, {
-  timezone: "Asia/Kolkata" 
+  timezone: "Asia/Kolkata"
 });
 
 console.log('Cron job scheduled: Daily check at 10:00 PM daily.');

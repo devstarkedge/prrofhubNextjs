@@ -15,6 +15,7 @@ export const fetchTimeEntries = async (
     },
   });
   const data = response.data || [];
+  console.log(data);
   return data.filter((entry) => entry.by_me === true);
 };
 

@@ -9,6 +9,7 @@ export const fetchEmployees = async () => {
       headers: {
         "Content-Type": "application/json",
         "X-API-KEY": API_KEYS[14149800188], 
+      },
     });
     return response.data;
   } catch (error) {

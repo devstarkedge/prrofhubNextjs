@@ -13,7 +13,16 @@ export const downloadExcel = (
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  XLSX.writeFile(wb, filename);
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 
 export const downloadPDF = (
@@ -33,7 +42,15 @@ export const downloadPDF = (
     head: [headers],
     body,
   });
-  doc.save(filename);
+  const pdfBlob = doc.output('blob');
+  const url = URL.createObjectURL(pdfBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 
 // Specific helpers for time entries (detailed)
@@ -271,5 +288,61 @@ export const prepareDepartmentSummaryPDFData = (
   return {
     tableData,
     headers: ["ID", "Name", "Email", "Title", "Total Logged Time", "Estimated Time"],
+  };
+};
+
+// Specific helpers for todos
+export const prepareTodoExcelData = (todos) => {
+  const data = todos.map((todo) => ({
+    ID: todo.id || "-",
+    Name: todo.title || "-",
+    Project: todo.project?.name || "-",
+    Logged: (() => {
+      const mins = (todo.logged_hours || 0) * 60 + (todo.logged_mins || 0);
+      return mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : "-";
+    })(),
+  }));
+
+  const totalLogged = todos.reduce(
+    (sum, todo) => sum + ((todo.logged_hours || 0) * 60 + (todo.logged_mins || 0)),
+    0
+  );
+
+  data.push({
+    ID: "Total",
+    Name: "",
+    Project: "",
+    Logged: totalLogged > 0 ? `${Math.floor(totalLogged / 60)}h ${totalLogged % 60}m` : "-",
+  });
+
+  return data;
+};
+
+export const prepareTodoPDFData = (todos) => {
+  const tableData = todos.map((todo) => [
+    todo.id || "-",
+    todo.title || "-",
+    todo.project?.name || "-",
+    (() => {
+      const mins = (todo.logged_hours || 0) * 60 + (todo.logged_mins || 0);
+      return mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : "-";
+    })(),
+  ]);
+
+  const totalLogged = todos.reduce(
+    (sum, todo) => sum + ((todo.logged_hours || 0) * 60 + (todo.logged_mins || 0)),
+    0
+  );
+
+  tableData.push([
+    "Total",
+    "",
+    "",
+    totalLogged > 0 ? `${Math.floor(totalLogged / 60)}h ${totalLogged % 60}m` : "-",
+  ]);
+
+  return {
+    tableData,
+    headers: ["ID", "Name", "Project", "Logged"],
   };
 };

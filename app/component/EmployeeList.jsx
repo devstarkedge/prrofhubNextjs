@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getFormattedDate, getDateRange } from "../utils/dateUtils";
 import { API_BASE_URL, API_KEYS } from "../utils/constants";
-import { fetchTodoCount, TimeEntry } from "../utils/apiUtils";
+import { fetchTodoCount, fetchTodos, TimeEntry } from "../utils/apiUtils";
 import { useTimeEntries } from "../hooks/useTimeEntries";
-import { prepareTimeEntryExcelData, prepareTimeEntryPDFData, downloadExcel, downloadPDF } from "../utils/downloadUtils";
+import { prepareTimeEntryExcelData, prepareTimeEntryPDFData, prepareTodoExcelData, prepareTodoPDFData, downloadExcel, downloadPDF } from "../utils/downloadUtils";
 import Spinner from "../components/ui/Spinner";
 import DateFilter from "../components/ui/DateFilter";
 import DownloadDropdown from "../components/ui/DownloadDropdown";
@@ -21,6 +21,8 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
   const [fromDate, setFromDate] = useState(getFormattedDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)));
   const [toDate, setToDate] = useState(getFormattedDate(new Date()));
   const [applyLoading, setApplyLoading] = useState(false);
+  const [todos, setTodos] = useState([]);
+  const [loadingTodos, setLoadingTodos] = useState(false);
 
   const { data: timeEntries, loading: loadingEntries, refetch } = useTimeEntries(selectedId, fromDate, toDate);
 
@@ -40,6 +42,12 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
       }
     }
   }, [currentPage, employees]);
+
+  useEffect(() => {
+    if (selectedId) {
+      fetchTodosForEmployee(selectedId);
+    }
+  }, [selectedId, fromDate, toDate]);
 
   const fetchEmployees = async () => {
     setLoading(true);
@@ -76,6 +84,18 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
       console.error("Error fetching todo counts:", error);
     } finally {
       setLoadingTodoIds(new Set());
+    }
+  };
+
+  const fetchTodosForEmployee = async (id) => {
+    setLoadingTodos(true);
+    try {
+      const data = await fetchTodos(id, fromDate, toDate);
+      setTodos(data);
+    } catch (error) {
+      console.error("Error fetching todos:", error);
+    } finally {
+      setLoadingTodos(false);
     }
   };
 
@@ -120,14 +140,24 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
     currentPage * pageSize
   );
 
-  const downloadExcel = () => {
+  const handleDownloadExcel = () => {
     const data = prepareTimeEntryExcelData(timeEntries || []);
     downloadExcel(data, `time_entries_${selectedId}_${fromDate}_to_${toDate}.xlsx`, "Time Entries");
   };
 
-  const downloadPDF = () => {
+  const handleDownloadPDF = () => {
     const { tableData, headers } = prepareTimeEntryPDFData(timeEntries || []);
     downloadPDF(tableData, headers, `time_entries_${selectedId}_${fromDate}_to_${toDate}.pdf`);
+  };
+
+  const downloadTodoExcel = () => {
+    const data = prepareTodoExcelData(todos || []);
+    downloadExcel(data, `todo_tasks_${selectedId}_${fromDate}_to_${toDate}.xlsx`, "Todo Tasks");
+  };
+
+  const downloadTodoPDF = () => {
+    const { tableData, headers } = prepareTodoPDFData(todos || []);
+    downloadPDF(tableData, headers, `todo_tasks_${selectedId}_${fromDate}_to_${toDate}.pdf`);
   };
 
   if (view === "list") {
@@ -258,7 +288,7 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
             loading={applyLoading}
           />
 
-          <DownloadDropdown onExcel={downloadExcel} onPDF={downloadPDF} loading={loadingEntries} />
+          <DownloadDropdown onExcel={handleDownloadExcel} onPDF={handleDownloadPDF} loading={loadingEntries} />
         </div>
 
         {loadingEntries ? (
@@ -268,13 +298,13 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
             <table className="min-w-full text-sm text-left text-gray-700 rounded-lg table-fixed">
               <thead className="bg-gray-200 text-gray-900 font-semibold">
                 <tr>
-                  <th className="px-4 py-3 border-b border-gray-300">Date</th>
-                  <th className="px-4 py-3 border-b border-gray-300">Task Name</th>
-                  <th className="px-4 py-3 border-b border-gray-300">Subtask Name</th>
-                  <th className="px-4 py-3 border-b border-gray-300">Project Name</th>
-                  <th className="px-4 py-3 border-b border-gray-300">Logged</th>
-                  <th className="px-4 py-3 border-b border-gray-300">Estimated</th>
-                  <th className="px-4 py-3 border-b border-gray-300">Description</th>
+                  <th className=" px-4 py-3 border-b border-gray-300">Date</th>
+                  <th className=" px-4 py-3 border-b border-gray-300">Task Name</th>
+                  <th className=" px-4 py-3 border-b border-gray-300">Subtask Name</th>
+                  <th className=" px-4 py-3 border-b border-gray-300">Project Name</th>
+                  <th className=" px-4 py-3 border-b border-gray-300">Logged</th>
+                  <th className=" px-4 py-3 border-b border-gray-300">Estimated</th>
+                  <th className=" py-3 border-b border-gray-300">Description</th>
                 </tr>
               </thead>
               <tbody>
@@ -331,7 +361,7 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                       <td className="px-4 py-2 border-b border-gray-200">
                         {estimated > 0 ? `${Math.floor(estimated / 60)}h ${estimated % 60}m` : "-"}
                       </td>
-                      <td className="px-4 py-2 border-b border-gray-200">{description}</td>
+                      <td className="max-w-[350px] break-words px-4 py-2 border-b border-gray-200">{description}</td>
                     </tr>
                   );
                 }) || null}
@@ -364,6 +394,59 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
               </tfoot>
             </table>
           </div>
+        )}
+
+        {loadingTodos ? (
+          <Spinner />
+        ) : (
+          <>
+            <div className="mt-6 mb-2 flex flex-wrap items-center justify-between gap-4">
+              <h2 className="text-lg font-semibold">Todo Tasks</h2>
+              <DownloadDropdown onExcel={downloadTodoExcel} onPDF={downloadTodoPDF} loading={loadingTodos} />
+            </div>
+            <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
+              <table className="min-w-full text-sm text-left text-gray-700 rounded-lg table-fixed">
+                <thead className="bg-gray-200 text-gray-900 font-semibold">
+                  <tr>
+                    <th className="px-4 py-3 border-b border-gray-300">ID</th>
+                    <th className="px-4 py-3 border-b border-gray-300">Name</th>
+                    <th className="px-4 py-3 border-b border-gray-300">Project</th>
+                    <th className="px-4 py-3 border-b border-gray-300">Logged</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todos?.map((todo, index) => {
+                    const loggedHours = todo.logged_hours || 0;
+                    const loggedMins = todo.logged_mins || 0;
+                    const totalLoggedMins = loggedHours * 60 + loggedMins;
+                    const loggedDisplay = totalLoggedMins > 0 ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m` : "-";
+                    return (
+                      <tr key={todo.id || index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+                        <td className="px-4 py-2 border-b border-gray-200">{todo.id || "-"}</td>
+                        <td className="px-4 py-2 border-b border-gray-200">{todo.title || "-"}</td>
+                        <td className="px-4 py-2 border-b border-gray-200">{todo.project?.name || "-"}</td>
+                        <td className="px-4 py-2 border-b border-gray-200">{loggedDisplay}</td>
+                      </tr>
+                    );
+                  }) || null}
+                </tbody>
+                <tfoot className="bg-gray-100 font-semibold">
+                  <tr>
+                    <td colSpan={3} className="px-4 py-2 border-t border-gray-300 text-right">Total:</td>
+                    <td className="px-4 py-2 border-t border-gray-300">
+                      {(() => {
+                        const totalLoggedMins = todos?.reduce(
+                          (sum, todo) => sum + ((todo.logged_hours || 0) * 60 + (todo.logged_mins || 0)),
+                          0
+                        ) || 0;
+                        return totalLoggedMins > 0 ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m` : "-";
+                      })()}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </>
         )}
       </div>
     );

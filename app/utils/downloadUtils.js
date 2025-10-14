@@ -38,9 +38,20 @@ export const downloadPDF = (
   if (isSummary && totalLogged && totalEstimated) {
     body.push(["Total", "", "", "", totalLogged, totalEstimated, ""]);
   }
+  // Calculate equal column width
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const marginLeft = 14; // default left margin
+  const marginRight = 14; // default right margin
+  const availableWidth = pageWidth - marginLeft - marginRight;
+  const columnWidth = availableWidth / headers.length;
+
   autoTable(doc, {
     head: [headers],
     body,
+    columnStyles: headers.reduce((styles, _, index) => {
+      styles[index] = { cellWidth: columnWidth };
+      return styles;
+    }, {}),
   });
   const pdfBlob = doc.output('blob');
   const url = URL.createObjectURL(pdfBlob);

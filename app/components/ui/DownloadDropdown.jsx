@@ -1,8 +1,21 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const DownloadDropdown = ({ onExcel, onPDF, loading }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="relative flex justify-center" ref={dropdownRef}>

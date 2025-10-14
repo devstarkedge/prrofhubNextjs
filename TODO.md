@@ -1,7 +1,6 @@
-# TODO: Add Download Functionality for Todo Tasks Table
+# TODO: Fix PDF Column Widths for Employee Details Table
 
-- [x] Add `prepareTodoExcelData(todos)` function in `downloadUtils.js` to prepare data for Excel download, including totals.
-- [x] Add `prepareTodoPDFData(todos)` function in `downloadUtils.js` to prepare table data and headers for PDF download, including totals.
-- [x] In `EmployeeList.jsx`, add `downloadTodoExcel` function that calls `prepareTodoExcelData` and `downloadExcel`.
-- [x] In `EmployeeList.jsx`, add `downloadTodoPDF` function that calls `prepareTodoPDFData` and `downloadPDF`.
-- [x] In `EmployeeList.jsx`, add a `DownloadDropdown` component for the todos table, placed near the "Todo Tasks" heading, with onExcel and onPDF handlers, and loading={loadingTodos}.
+## Steps to Complete
+
+- [x] Modify the `downloadPDF` function in `proofhub/app/utils/downloadUtils.js` to set equal column widths for all columns by calculating the width based on the number of headers and applying `columnStyles`.
+- [ ] Test the PDF download for employee details to verify that all columns have equal width and the description column no longer expands to the maximum page width.

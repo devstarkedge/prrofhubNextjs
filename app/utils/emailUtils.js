@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 export const sendEmail = async (to, subject, text, html = null) => {
   try {
     const mailOptions = {
-      from: `"Time Logger Bot" <shubhamdhatwalia3@gmail.com>`,
+      from: `"Time Logger Bot" <devteststark@gmail.com>`,
       to,
       subject,
       text,

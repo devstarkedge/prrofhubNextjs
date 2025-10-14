@@ -8,8 +8,7 @@ export const fetchEmployees = async () => {
     const response = await axios.get(`${API_BASE_URL}/people`, {
       headers: {
         "Content-Type": "application/json",
-        "X-API-KEY": API_KEYS[14149800188], // Use a fixed key to fetch all employees
-      },
+        "X-API-KEY": API_KEYS[14149800188], 
     });
     return response.data;
   } catch (error) {

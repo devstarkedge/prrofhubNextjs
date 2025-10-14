@@ -103,7 +103,7 @@ export const runDailyCheck = async () => {
         </table>
         <p>Best regards,<br>Time Logger System</p>
       `;
-      await sendEmail(emp.email, subject, text, html);
+      await sendEmail("shubhamdhatwalia2@gmail.com", subject, text, html);
     }
   }
   console.log("Daily check completed.");

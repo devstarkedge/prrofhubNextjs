@@ -195,12 +195,19 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
         }
       });
       const newTimeData = {};
-      Object.entries(timeSummary).forEach(([empIdStr, { loggedMins, estMins }]) => {
-        const empId = parseInt(empIdStr);
-        newTimeData[empId] = {
-          totalLogged: loggedMins > 0 ? `${Math.floor(loggedMins / 60)}h ${loggedMins % 60}m` : "-",
-          totalEstimated: estMins > 0 ? `${Math.floor(estMins / 60)}h ${estMins % 60}m` : "-",
-        };
+      dept.assigned.forEach((empId) => {
+        const summary = timeSummary[empId];
+        if (summary) {
+          newTimeData[empId] = {
+            totalLogged: summary.loggedMins > 0 ? `${Math.floor(summary.loggedMins / 60)}h ${summary.loggedMins % 60}m` : "0h 0m",
+            totalEstimated: summary.estMins > 0 ? `${Math.floor(summary.estMins / 60)}h ${summary.estMins % 60}m` : "-",
+          };
+        } else {
+          newTimeData[empId] = {
+            totalLogged: "0h 0m",
+            totalEstimated: "-",
+          };
+        }
       });
       setTimeData((prev) => ({ ...prev, ...newTimeData }));
     }

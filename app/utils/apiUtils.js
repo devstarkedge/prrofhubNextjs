@@ -58,7 +58,7 @@ export const fetchTodos = async (id, from, to) => {
         const todoDate = new Date(todo.due_date);
         return todoDate >= fromDate && todoDate <= toDate;
       }
-      return false; // If no due_date, exclude from date range filters
+      return false; 
     });
   }
 

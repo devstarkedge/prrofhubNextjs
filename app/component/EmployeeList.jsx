@@ -400,7 +400,7 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
         ) : (
           <>
             <div className="mt-6 mb-2 flex flex-wrap items-center justify-between gap-4">
-              <h2 className="text-lg font-semibold">Todo Tasks</h2>
+              <h2 className="text-lg font-semibold">Due Tasks</h2>
               <DownloadDropdown onExcel={downloadTodoExcel} onPDF={downloadTodoPDF} loading={loadingTodos} />
             </div>
             <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
@@ -411,6 +411,8 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                     <th className="px-4 py-3 border-b border-gray-300">Name</th>
                     <th className="px-4 py-3 border-b border-gray-300">Project</th>
                     <th className="px-4 py-3 border-b border-gray-300">Logged</th>
+                    <th className="px-4 py-3 border-b border-gray-300">Due Date</th>
+
                   </tr>
                 </thead>
                 <tbody>
@@ -424,14 +426,15 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                         <td className="px-4 py-2 border-b border-gray-200">{todo.id || "-"}</td>
                         <td className="px-4 py-2 border-b border-gray-200">{todo.title || "-"}</td>
                         <td className="px-4 py-2 border-b border-gray-200">{todo.project?.name || "-"}</td>
-                        <td className="px-4 py-2 border-b border-gray-200">{loggedDisplay}</td>
+                        <td className="px-4 py-2 border-b border-gray-200">{loggedDisplay || "-"}</td>
+                        <td className="px-4 py-2 border-b border-gray-200">{todo.due_date || "-"}</td>
                       </tr>
                     );
                   }) || null}
                 </tbody>
                 <tfoot className="bg-gray-100 font-semibold">
                   <tr>
-                    <td colSpan={3} className="px-4 py-2 border-t border-gray-300 text-right">Total:</td>
+                    <td colSpan={4} className="px-4 py-2 border-t border-gray-300 text-right">Total:</td>
                     <td className="px-4 py-2 border-t border-gray-300">
                       {(() => {
                         const totalLoggedMins = todos?.reduce(

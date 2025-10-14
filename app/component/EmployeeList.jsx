@@ -106,7 +106,6 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
       if (range) {
         setFromDate(range.from);
         setToDate(range.to);
-        refetch();
       }
     }
   };

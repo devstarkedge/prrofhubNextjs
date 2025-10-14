@@ -38,10 +38,9 @@ export const downloadPDF = (
   if (isSummary && totalLogged && totalEstimated) {
     body.push(["Total", "", "", "", totalLogged, totalEstimated, ""]);
   }
-  // Calculate equal column width
   const pageWidth = doc.internal.pageSize.getWidth();
-  const marginLeft = 14; // default left margin
-  const marginRight = 14; // default right margin
+  const marginLeft = 14; 
+  const marginRight = 14; 
   const availableWidth = pageWidth - marginLeft - marginRight;
   const columnWidth = availableWidth / headers.length;
 
@@ -64,7 +63,6 @@ export const downloadPDF = (
   URL.revokeObjectURL(url);
 };
 
-// Specific helpers for time entries (detailed)
 export const prepareTimeEntryExcelData = (timeEntries) => {
   const data = timeEntries.map((entry) => ({
     Date: new Date(entry.date).toLocaleDateString(),
@@ -180,7 +178,6 @@ export const prepareTimeEntryPDFData = (timeEntries) => {
   };
 };
 
-// Specific helpers for department summaries
 export const prepareDepartmentSummaryExcelData = (
   deptAssigned,
   employeeMap,
@@ -302,7 +299,6 @@ export const prepareDepartmentSummaryPDFData = (
   };
 };
 
-// Specific helpers for todos
 export const prepareTodoExcelData = (todos) => {
   const data = todos.map((todo) => ({
     ID: todo.id || "-",

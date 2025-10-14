@@ -29,7 +29,11 @@ export const fetchTodoCount = async (id) => {
       "X-API-KEY": apiKey,
     },
   });
-  return response.data.length;
+  const data = response.data || [];
+  const filtered = data.filter((todo) => {
+    return todo.assigned && todo.assigned.includes(id);
+  });
+  return filtered.length;
 };
 
 export const fetchTodos = async (id, from, to) => {

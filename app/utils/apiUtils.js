@@ -15,7 +15,8 @@ export const fetchTimeEntries = async (employeeId, from, to) => {
     }
   );
   const data = response.data || [];
-  console.log(data);
+
+  console.log("data", data)
   return data.filter((entry) => entry.by_me === true);
 };
 
@@ -33,7 +34,6 @@ export const fetchTodoCount = async (id) => {
 
 export const fetchTodos = async (id, from, to) => {
   const apiKey = API_KEYS[id];
-  console.log(id);
   if (!apiKey) return [];
   const response = await axios.get(`${API_BASE_URL}/alltodo`, {
     headers: {
@@ -43,7 +43,6 @@ export const fetchTodos = async (id, from, to) => {
   });
   const data = response.data || [];
 
-  console.log("todo",data);
 
   // Filter by assigned
   const assignedFiltered = data.filter((todo) => {
@@ -58,9 +57,47 @@ export const fetchTodos = async (id, from, to) => {
         const todoDate = new Date(todo.due_date);
         return todoDate >= fromDate && todoDate <= toDate;
       }
-      return false; 
+      return false;
     });
   }
 
   return assignedFiltered;
+};
+
+export const fetchTaskEstimatedTime = async (projectId, todolistId, taskId, employeeId) => {
+  const apiKey = API_KEYS[employeeId];
+  if (!apiKey) return null;
+  const response = await axios.get(
+    `${API_BASE_URL}/projects/${projectId}/todolists/${todolistId}/tasks/${taskId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": apiKey,
+      },
+    }
+  );
+  const data = response.data;
+  return {
+    estimated_hours: data.estimated_hours,
+    estimated_mins: data.estimated_mins,
+  };
+};
+
+export const fetchSubtaskEstimatedTime = async (projectId, todolistId, taskId, subtaskId, employeeId) => {
+  const apiKey = API_KEYS[employeeId];
+  if (!apiKey) return null;
+  const response = await axios.get(
+    `${API_BASE_URL}/projects/${projectId}/todolists/${todolistId}/tasks/${taskId}/subtasks/${subtaskId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": apiKey,
+      },
+    }
+  );
+  const data = response.data;
+  return {
+    estimated_hours: data.estimated_hours,
+    estimated_mins: data.estimated_mins,
+  };
 };

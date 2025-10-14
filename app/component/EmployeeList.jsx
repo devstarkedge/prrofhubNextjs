@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getFormattedDate, getDateRange } from "../utils/dateUtils";
 import { API_BASE_URL, API_KEYS } from "../utils/constants";
-import { fetchTodoCount, fetchTodos, TimeEntry } from "../utils/apiUtils";
+import { fetchTodoCount, fetchTodos, TimeEntry, fetchTaskEstimatedTime, fetchSubtaskEstimatedTime } from "../utils/apiUtils";
 import { useTimeEntries } from "../hooks/useTimeEntries";
 import { prepareTimeEntryExcelData, prepareTimeEntryPDFData, prepareTodoExcelData, prepareTodoPDFData, downloadExcel, downloadPDF } from "../utils/downloadUtils";
 import Spinner from "../components/ui/Spinner";
@@ -23,6 +23,7 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
   const [applyLoading, setApplyLoading] = useState(false);
   const [todos, setTodos] = useState([]);
   const [loadingTodos, setLoadingTodos] = useState(false);
+  const [estimatedTimes, setEstimatedTimes] = useState(new Map());
 
   const { data: timeEntries, loading: loadingEntries, refetch } = useTimeEntries(selectedId, fromDate, toDate);
 
@@ -46,8 +47,9 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
   useEffect(() => {
     if (selectedId) {
       fetchTodosForEmployee(selectedId);
+      fetchEstimatedTimesForEntries();
     }
-  }, [selectedId, fromDate, toDate]);
+  }, [selectedId, fromDate, toDate, timeEntries]);
 
   const fetchEmployees = async () => {
     setLoading(true);
@@ -97,6 +99,55 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
     } finally {
       setLoadingTodos(false);
     }
+  };
+
+  const fetchEstimatedTimesForEntries = async () => {
+    if (!timeEntries || timeEntries.length === 0) return;
+    const newEstimatedTimes = new Map();
+    const validEntries = timeEntries.filter(entry => entry.project);
+    const promises = validEntries.map(async (entry) => {
+      let key;
+      let estimatedTime;
+      if (entry.task) {
+        key = entry.task.subtask_id
+          ? `${entry.project.id}-${entry.task.list_id}-${entry.task.task_id}-${entry.task.subtask_id}`
+          : `${entry.project.id}-${entry.task.list_id}-${entry.task.task_id}`;
+        if (!newEstimatedTimes.has(key)) {
+          try {
+            if (entry.task.subtask_id) {
+              estimatedTime = await fetchSubtaskEstimatedTime(
+                entry.project.id,
+                entry.task.list_id,
+                entry.task.task_id,
+                entry.task.subtask_id,
+                selectedId
+              );
+            } else {
+              estimatedTime = await fetchTaskEstimatedTime(
+                entry.project.id,
+                entry.task.list_id,
+                entry.task.task_id,
+                selectedId
+              );
+            }
+            newEstimatedTimes.set(key, estimatedTime);
+          } catch (error) {
+            console.error("Error fetching estimated time:", error);
+            newEstimatedTimes.set(key, null);
+          }
+        }
+      } else {
+        // For project-only entries, use estimated time from the time entry itself
+        key = `project-${entry.project.id}`;
+        estimatedTime = {
+          estimated_hours: entry.estimated_hours || 0,
+          estimated_mins: entry.estimated_mins || 0,
+        };
+        newEstimatedTimes.set(key, estimatedTime);
+      }
+    });
+    await Promise.all(promises);
+    setEstimatedTimes(newEstimatedTimes);
   };
 
   const handleFilterChange = (value) => {
@@ -308,29 +359,39 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
               </thead>
               <tbody>
                 {timeEntries?.map((entry, index) => {
+                  if (!entry.project || !entry.task) {
+                    return null;
+                  }
                   const formattedDate = new Date(entry.date).toLocaleDateString();
-                  const projectUrl = entry.project
-                    ? `https://projects.starkedge.com/bappswift/#app/todos/project-${entry.project.id}`
-                    : null;
-                  const taskUrl = entry.task && entry.project
+                  const projectUrl = `https://projects.starkedge.com/bappswift/#app/todos/project-${entry.project.id}`;
+                  const taskUrl = entry.task
                     ? `https://projects.starkedge.com/bappswift/#app/todos/project-${entry.project.id}/list-${entry.task.list_id}/task-${entry.task.task_id}`
                     : null;
-                  const subtaskUrl = entry.task && entry.task.subtask_id && entry.project
+                  const subtaskUrl = entry.task && entry.task.subtask_id
                     ? `https://projects.starkedge.com/bappswift/#app/todos/project-${entry.project.id}/list-${entry.task.list_id}/task-${entry.task.subtask_id}`
                     : null;
                   const loggedHours = entry.logged_hours || 0;
                   const loggedMins = entry.logged_mins || 0;
                   const totalLoggedMins = loggedHours * 60 + loggedMins;
                   const loggedDisplay = totalLoggedMins > 0 ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m` : "-";
-                  const estimated = entry.timesheet
-                    ? (entry.timesheet.estimated_hours || 0) * 60 + (entry.timesheet.estimated_mins || 0)
+                  let key;
+                  if (entry.task) {
+                    key = entry.task.subtask_id
+                      ? `${entry.project.id}-${entry.task.list_id}-${entry.task.task_id}-${entry.task.subtask_id}`
+                      : `${entry.project.id}-${entry.task.list_id}-${entry.task.task_id}`;
+                  } else {
+                    key = `project-${entry.project.id}`;
+                  }
+                  const estimatedTime = estimatedTimes.get(key);
+                  const estimated = estimatedTime
+                    ? (estimatedTime.estimated_hours || 0) * 60 + (estimatedTime.estimated_mins || 0)
                     : 0;
                   const description = entry.description || "-";
                   return (
                     <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
                       <td className="px-4 py-2 border-b border-gray-200">{formattedDate}</td>
                       <td className="px-4 py-2 border-b border-gray-200">
-                        {entry.task && entry.task.task_name ? (
+                        {entry.task ? (
                           <a className="hover:underline" href={taskUrl} target="_blank" rel="noreferrer">
                             {entry.task.task_name}
                           </a>
@@ -339,7 +400,7 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                         )}
                       </td>
                       <td className="px-4 py-2 border-b border-gray-200">
-                        {entry.task?.subtask_name ? (
+                        {entry.task && entry.task.subtask_name ? (
                           <a className="hover:underline" href={subtaskUrl} target="_blank" rel="noreferrer">
                             {entry.task.subtask_name}
                           </a>
@@ -348,13 +409,9 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                         )}
                       </td>
                       <td className="px-4 py-2 border-b border-gray-200">
-                        {entry.project && entry.project.name ? (
-                          <a className="hover:underline" href={projectUrl} target="_blank" rel="noreferrer">
-                            {entry.project.name}
-                          </a>
-                        ) : (
-                          "-"
-                        )}
+                        <a className="hover:underline" href={projectUrl} target="_blank" rel="noreferrer">
+                          {entry.project.name}
+                        </a>
                       </td>
                       <td className="px-4 py-2 border-b border-gray-200">{loggedDisplay}</td>
                       <td className="px-4 py-2 border-b border-gray-200">
@@ -381,10 +438,16 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                     {(() => {
                       const uniqueTasks = new Map();
                       timeEntries?.forEach((entry) => {
-                        if (entry.timesheet && entry.task) {
+                        if (entry.task && entry.project) {
+                          const key = entry.task.subtask_id
+                            ? `${entry.project.id}-${entry.task.list_id}-${entry.task.task_id}-${entry.task.subtask_id}`
+                            : `${entry.project.id}-${entry.task.list_id}-${entry.task.task_id}`;
                           const taskKey = entry.task.task_id;
                           if (!uniqueTasks.has(taskKey)) {
-                            const estimatedMins = (entry.timesheet.estimated_hours || 0) * 60 + (entry.timesheet.estimated_mins || 0);
+                            const estimatedTime = estimatedTimes.get(key);
+                            const estimatedMins = estimatedTime
+                              ? (estimatedTime.estimated_hours || 0) * 60 + (estimatedTime.estimated_mins || 0)
+                              : 0;
                             uniqueTasks.set(taskKey, estimatedMins);
                           }
                         }

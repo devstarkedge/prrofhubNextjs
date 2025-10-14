@@ -1,1 +1,0 @@
-- [x] Fix total estimated time calculation in EmployeeList.jsx to sum uniquely per task

@@ -130,15 +130,10 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
       todayEntries.forEach((entry) => {
         const empId = entry.employeeId;
         if (!timeSummaryToday[empId]) {
-          timeSummaryToday[empId] = { loggedMins: 0, estMins: 0 };
+          timeSummaryToday[empId] = { loggedMins: 0 };
         }
         timeSummaryToday[empId].loggedMins +=
           (entry.logged_hours || 0) * 60 + (entry.logged_mins || 0);
-        if (entry.timesheet) {
-          timeSummaryToday[empId].estMins +=
-            (entry.timesheet.estimated_hours || 0) * 60 +
-            (entry.timesheet.estimated_mins || 0);
-        }
       });
 
       setDepartmentTimeEntries((prev) => ({ ...prev, [deptId]: todayEntries }));
@@ -146,17 +141,14 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
       const newTimeData = {};
       dept.assigned.forEach((empId) => {
         const loggedMinsToday = timeSummaryToday[empId]?.loggedMins || 0;
-        const estMinsToday = timeSummaryToday[empId]?.estMins || 0;
 
         if (loggedMinsToday > 0) {
           newTimeData[empId] = {
             totalLogged: `${Math.floor(loggedMinsToday / 60)}h ${loggedMinsToday % 60}m`,
-            totalEstimated: estMinsToday > 0 ? `${Math.floor(estMinsToday / 60)}h ${estMinsToday % 60}m` : "-",
           };
         } else {
           newTimeData[empId] = {
             totalLogged: "0h 0m",
-            totalEstimated: "-",
           };
         }
       });
@@ -184,15 +176,10 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
       allEntries.forEach((entry) => {
         const empId = entry.employeeId;
         if (!timeSummary[empId]) {
-          timeSummary[empId] = { loggedMins: 0, estMins: 0 };
+          timeSummary[empId] = { loggedMins: 0 };
         }
         timeSummary[empId].loggedMins +=
           (entry.logged_hours || 0) * 60 + (entry.logged_mins || 0);
-        if (entry.timesheet) {
-          timeSummary[empId].estMins +=
-            (entry.timesheet.estimated_hours || 0) * 60 +
-            (entry.timesheet.estimated_mins || 0);
-        }
       });
       const newTimeData = {};
       dept.assigned.forEach((empId) => {
@@ -200,12 +187,10 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
         if (summary) {
           newTimeData[empId] = {
             totalLogged: summary.loggedMins > 0 ? `${Math.floor(summary.loggedMins / 60)}h ${summary.loggedMins % 60}m` : "0h 0m",
-            totalEstimated: summary.estMins > 0 ? `${Math.floor(summary.estMins / 60)}h ${summary.estMins % 60}m` : "-",
           };
         } else {
           newTimeData[empId] = {
             totalLogged: "0h 0m",
-            totalEstimated: "-",
           };
         }
       });
@@ -259,12 +244,11 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
       { key: "email", label: "Email" },
       // { key: "title", label: "Title" },
       { key: "totalLogged", label: "Total Logged Time" },
-      { key: "totalEstimated", label: "Estimated Time" },
     ];
 
     const tableData = dept.assigned.map((empId) => {
       const emp = employeeMap[empId];
-      const time = timeData[empId] || { totalLogged: "-", totalEstimated: "-" };
+      const time = timeData[empId] || { totalLogged: "-" };
       return emp ? {
         id: (
           <a
@@ -283,7 +267,6 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
         email: emp.email,
         // title: emp.title || "—",
         totalLogged: timeLoadingDepts.has(dept.id) ? <Spinner /> : time.totalLogged,
-        totalEstimated: timeLoadingDepts.has(dept.id) ? <Spinner /> : time.totalEstimated,
       } : null;
     }).filter(Boolean);
 
@@ -303,19 +286,6 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
           return sum;
         }, 0);
         return totalLoggedMins > 0 ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m` : "-";
-      })(),
-      (() => {
-        const totalEstMins = dept.assigned.reduce((sum, empId) => {
-          const time = timeData[empId];
-          if (time && time.totalEstimated !== "-") {
-            const parts = time.totalEstimated.split("h ");
-            const h = parseInt(parts[0]) || 0;
-            const m = parseInt(parts[1]?.replace("m", "")) || 0;
-            return sum + h * 60 + m;
-          }
-          return sum;
-        }, 0);
-        return totalEstMins > 0 ? `${Math.floor(totalEstMins / 60)}h ${totalEstMins % 60}m` : "-";
       })(),
     ];
 

@@ -379,12 +379,17 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                   </td>
                   <td className="px-4 py-2 border-t border-gray-300">
                     {(() => {
-                      const totalMins = timeEntries?.reduce((sum, entry) => {
-                        if (entry.timesheet) {
-                          return sum + (entry.timesheet.estimated_hours || 0) * 60 + (entry.timesheet.estimated_mins || 0);
+                      const uniqueTasks = new Map();
+                      timeEntries?.forEach((entry) => {
+                        if (entry.timesheet && entry.task) {
+                          const taskKey = entry.task.task_id;
+                          if (!uniqueTasks.has(taskKey)) {
+                            const estimatedMins = (entry.timesheet.estimated_hours || 0) * 60 + (entry.timesheet.estimated_mins || 0);
+                            uniqueTasks.set(taskKey, estimatedMins);
+                          }
                         }
-                        return sum;
-                      }, 0) || 0;
+                      });
+                      const totalMins = Array.from(uniqueTasks.values()).reduce((sum, mins) => sum + mins, 0);
                       return totalMins > 0 ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m` : "-";
                     })()}
                   </td>

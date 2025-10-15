@@ -339,6 +339,7 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
                 });
               }}
               loading={applyLoading.has(dept.id)}
+              disabled={loading || timeLoadingDepts.has(dept.id) || applyLoading.has(dept.id)}
             />
           </div>
 

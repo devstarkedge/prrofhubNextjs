@@ -187,15 +187,12 @@ export const prepareDepartmentSummaryExcelData = (
     const emp = employeeMap[empId];
     const time = timeData[empId] || {
       totalLogged: "-",
-      totalEstimated: "-",
     };
     return {
       ID: emp.id,
       Name: `${emp.first_name} ${emp.last_name}`,
       Email: emp.email,
-      Title: emp.title || "-",
       "Total Logged Time": time.totalLogged,
-      "Estimated Time": time.totalEstimated,
     };
   });
 
@@ -209,29 +206,14 @@ export const prepareDepartmentSummaryExcelData = (
     }
     return sum;
   }, 0);
-  const totalEstMins = deptAssigned.reduce((sum, empId) => {
-    const time = timeData[empId];
-    if (time && time.totalEstimated !== "-") {
-      const parts = time.totalEstimated.split("h ");
-      const h = parseInt(parts[0]) || 0;
-      const m = parseInt(parts[1]?.replace("m", "")) || 0;
-      return sum + h * 60 + m;
-    }
-    return sum;
-  }, 0);
 
   data.push({
     ID: "Total",
     Name: "",
     Email: "",
-    Title: "",
     "Total Logged Time":
       totalLoggedMins > 0
         ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m`
-        : "-",
-    "Estimated Time":
-      totalEstMins > 0
-        ? `${Math.floor(totalEstMins / 60)}h ${totalEstMins % 60}m`
         : "-",
   });
 
@@ -247,15 +229,12 @@ export const prepareDepartmentSummaryPDFData = (
     const emp = employeeMap[empId];
     const time = timeData[empId] || {
       totalLogged: "-",
-      totalEstimated: "-",
     };
     return [
       emp.id,
       `${emp.first_name} ${emp.last_name}`,
       emp.email,
-      emp.title || "-",
       time.totalLogged,
-      time.totalEstimated,
     ];
   });
 
@@ -269,33 +248,19 @@ export const prepareDepartmentSummaryPDFData = (
     }
     return sum;
   }, 0);
-  const totalEstMins = deptAssigned.reduce((sum, empId) => {
-    const time = timeData[empId];
-    if (time && time.totalEstimated !== "-") {
-      const parts = time.totalEstimated.split("h ");
-      const h = parseInt(parts[0]) || 0;
-      const m = parseInt(parts[1]?.replace("m", "")) || 0;
-      return sum + h * 60 + m;
-    }
-    return sum;
-  }, 0);
 
   tableData.push([
     "Total",
     "",
     "",
-    "",
     totalLoggedMins > 0
       ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m`
-      : "-",
-    totalEstMins > 0
-      ? `${Math.floor(totalEstMins / 60)}h ${totalEstMins % 60}m`
       : "-",
   ]);
 
   return {
     tableData,
-    headers: ["ID", "Name", "Email", "Title", "Total Logged Time", "Estimated Time"],
+    headers: ["ID", "Name", "Email", "Total Logged Time"],
   };
 };
 

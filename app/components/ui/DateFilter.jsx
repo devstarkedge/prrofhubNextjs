@@ -5,12 +5,14 @@ const DateFilter = ({
   onDateRangeChange,
   onApply,
   loading = false,
+  disabled = false,
 }) => {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <select
         value={selectedFilter}
         onChange={(e) => onFilterChange(e.target.value)}
+        disabled={disabled}
         className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <option value="Today">Today</option>
@@ -33,6 +35,7 @@ const DateFilter = ({
               onChange={(e) =>
                 onDateRangeChange({ ...dateRange, from: e.target.value })
               }
+              disabled={disabled}
               className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -48,15 +51,16 @@ const DateFilter = ({
               onChange={(e) =>
                 onDateRangeChange({ ...dateRange, to: e.target.value })
               }
+              disabled={disabled}
               className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <button
             onClick={onApply}
-            disabled={loading}
+            disabled={loading || disabled}
             className={`px-4 py-2 text-white rounded transition ${
-              loading
+              loading || disabled
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-green-600 hover:bg-green-700"
             }`}

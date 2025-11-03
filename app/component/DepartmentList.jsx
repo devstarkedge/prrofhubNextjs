@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { getFormattedDate, getDateRange } from "../utils/dateUtils";
+import { getFormattedDate, getDateRange, getDaysBetween } from "../utils/dateUtils";
 import { API_BASE_URL, API_KEYS } from "../utils/constants";
 import { fetchTimeEntries, TimeEntry } from "../utils/apiUtils";
 import { prepareDepartmentSummaryExcelData, prepareDepartmentSummaryPDFData, downloadExcel, downloadPDF } from "../utils/downloadUtils";
@@ -109,101 +109,78 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
     const dept = departments.find((d) => d.id === deptId);
     if (!dept) return;
 
-    if (filter === "Today") {
-      const todayEntries = [];
-      for (const empId of dept.assigned) {
-        try {
-          const entries = await fetchTimeEntries(empId, from, to);
-          const filteredEntries = entries.filter((entry) => entry.by_me === true);
-          filteredEntries.forEach((entry) => {
-            entry.employeeId = empId;
-            const emp = employeeMap[empId];
-            entry.employeeName = emp ? `${emp.first_name} ${emp.last_name}` : "Unknown";
-          });
-          todayEntries.push(...filteredEntries);
-        } catch (error) {
-          console.error(`Error fetching for employee ${empId}`, error);
-        }
+    const allEntries = [];
+    for (const empId of dept.assigned) {
+      try {
+        const entries = await fetchTimeEntries(empId, from, to);
+        const filteredEntries = entries.filter((entry) => entry.by_me === true);
+        filteredEntries.forEach((entry) => {
+          entry.employeeId = empId;
+          const emp = employeeMap[empId];
+          entry.employeeName = emp ? `${emp.first_name} ${emp.last_name}` : "Unknown";
+        });
+        allEntries.push(...filteredEntries);
+      } catch (error) {
+        console.error(`Error fetching detailed time entries for employee ${empId}`, error);
       }
-
-      const timeSummaryToday = {};
-      todayEntries.forEach((entry) => {
-        const empId = entry.employeeId;
-        if (!timeSummaryToday[empId]) {
-          timeSummaryToday[empId] = { loggedMins: 0 };
-        }
-        timeSummaryToday[empId].loggedMins +=
-          (entry.logged_hours || 0) * 60 + (entry.logged_mins || 0);
-      });
-
-      setDepartmentTimeEntries((prev) => ({ ...prev, [deptId]: todayEntries }));
-
-      const newTimeData = {};
-      dept.assigned.forEach((empId) => {
-        const loggedMinsToday = timeSummaryToday[empId]?.loggedMins || 0;
-
-        if (loggedMinsToday > 0) {
-          newTimeData[empId] = {
-            totalLogged: `${Math.floor(loggedMinsToday / 60)}h ${loggedMinsToday % 60}m`,
-          };
-        } else {
-          newTimeData[empId] = {
-            totalLogged: "0h 0m",
-          };
-        }
-      });
-      setTimeData((prev) => ({ ...prev, ...newTimeData }));
-    } else {
-      const allEntries = [];
-      for (const empId of dept.assigned) {
-        try {
-          const entries = await fetchTimeEntries(empId, from, to);
-          const filteredEntries = entries.filter((entry) => entry.by_me === true);
-          filteredEntries.forEach((entry) => {
-            entry.employeeId = empId;
-            const emp = employeeMap[empId];
-            entry.employeeName = emp ? `${emp.first_name} ${emp.last_name}` : "Unknown";
-          });
-          allEntries.push(...filteredEntries);
-        } catch (error) {
-          console.error(`Error fetching detailed time entries for employee ${empId}`, error);
-        }
-      }
-
-      setDepartmentTimeEntries((prev) => ({ ...prev, [deptId]: allEntries }));
-
-      const timeSummary = {};
-      allEntries.forEach((entry) => {
-        const empId = entry.employeeId;
-        if (!timeSummary[empId]) {
-          timeSummary[empId] = { loggedMins: 0 };
-        }
-        timeSummary[empId].loggedMins +=
-          (entry.logged_hours || 0) * 60 + (entry.logged_mins || 0);
-      });
-      const newTimeData = {};
-      dept.assigned.forEach((empId) => {
-        const summary = timeSummary[empId];
-        if (summary) {
-          newTimeData[empId] = {
-            totalLogged: summary.loggedMins > 0 ? `${Math.floor(summary.loggedMins / 60)}h ${summary.loggedMins % 60}m` : "0h 0m",
-          };
-        } else {
-          newTimeData[empId] = {
-            totalLogged: "0h 0m",
-          };
-        }
-      });
-      setTimeData((prev) => ({ ...prev, ...newTimeData }));
     }
+
+    setDepartmentTimeEntries((prev) => ({ ...prev, [deptId]: allEntries }));
+
+    const timeSummary = {};
+    const dailySummary = {};
+    allEntries.forEach((entry) => {
+      const empId = entry.employeeId;
+      const date = entry.date; // Assuming entry has a 'date' field in YYYY-MM-DD format
+      if (!timeSummary[empId]) {
+        timeSummary[empId] = { loggedMins: 0 };
+        dailySummary[empId] = {};
+      }
+      const mins = (entry.logged_hours || 0) * 60 + (entry.logged_mins || 0);
+      timeSummary[empId].loggedMins += mins;
+      if (!dailySummary[empId][date]) {
+        dailySummary[empId][date] = 0;
+      }
+      dailySummary[empId][date] += mins;
+    });
+
+    const newTimeData = {};
+    dept.assigned.forEach((empId) => {
+      const summary = timeSummary[empId];
+      const daily = dailySummary[empId] || {};
+      if (summary) {
+        newTimeData[empId] = {
+          totalLogged: summary.loggedMins > 0 ? `${Math.floor(summary.loggedMins / 60)}h ${summary.loggedMins % 60}m` : "0h 0m",
+          daily: Object.keys(daily).reduce((acc, date) => {
+            acc[date] = daily[date] > 0 ? `${Math.floor(daily[date] / 60)}h ${daily[date] % 60}m` : "0h 0m";
+            return acc;
+          }, {}),
+        };
+      } else {
+        newTimeData[empId] = {
+          totalLogged: "0h 0m",
+          daily: {},
+        };
+      }
+    });
+    setTimeData((prev) => ({ ...prev, ...newTimeData }));
   };
 
   const handleDownloadExcel = (deptId) => {
     setDownloadLoading((prev) => new Set(prev).add(deptId));
     const dept = departments.find((d) => d.id === deptId);
     if (!dept) return;
-    const data = prepareDepartmentSummaryExcelData(dept.assigned, employeeMap, timeData);
-    downloadExcel(data, `department_summary_${deptId}_${deptDateRanges[deptId]?.from}_to_${deptDateRanges[deptId]?.to}.xlsx`, "Department Summary");
+    const dateRange = deptDateRanges[deptId] || { from: "", to: "" };
+    const dates = [];
+    if (dateRange.from && dateRange.to) {
+      const start = new Date(dateRange.from);
+      const end = new Date(dateRange.to);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        dates.push(getFormattedDate(new Date(d)));
+      }
+    }
+    const data = prepareDepartmentSummaryExcelData(dept.assigned, employeeMap, timeData, dates);
+    downloadExcel(data, `department_summary_${deptId}_${dateRange.from}_to_${dateRange.to}.xlsx`, "Department Summary");
     setDownloadLoading((prev) => {
       const newSet = new Set(prev);
       newSet.delete(deptId);
@@ -215,8 +192,17 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
     setDownloadLoading((prev) => new Set(prev).add(deptId));
     const dept = departments.find((d) => d.id === deptId);
     if (!dept) return;
-    const { tableData, headers } = prepareDepartmentSummaryPDFData(dept.assigned, employeeMap, timeData);
-    downloadPDF(tableData, headers, `department_summary_${deptId}_${deptDateRanges[deptId]?.from}_to_${deptDateRanges[deptId]?.to}.pdf`);
+    const dateRange = deptDateRanges[deptId] || { from: "", to: "" };
+    const dates = [];
+    if (dateRange.from && dateRange.to) {
+      const start = new Date(dateRange.from);
+      const end = new Date(dateRange.to);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        dates.push(getFormattedDate(new Date(d)));
+      }
+    }
+    const { tableData, headers } = prepareDepartmentSummaryPDFData(dept.assigned, employeeMap, timeData, dates);
+    downloadPDF(tableData, headers, `department_summary_${deptId}_${dateRange.from}_to_${dateRange.to}.pdf`);
     setDownloadLoading((prev) => {
       const newSet = new Set(prev);
       newSet.delete(deptId);
@@ -237,20 +223,31 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
     const isLoading = downloadLoading.has(dept.id);
     const dateRange = deptDateRanges[dept.id] || { from: "", to: "" };
 
+    // Generate list of dates between from and to
+    const dates = [];
+    if (dateRange.from && dateRange.to) {
+      const start = new Date(dateRange.from);
+      const end = new Date(dateRange.to);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        dates.push(getFormattedDate(new Date(d)));
+      }
+    }
+
     const columns = [
-      { key: "id", label: "ID" },
       // { key: "photo", label: "Photo" },
       { key: "name", label: "Name" },
       { key: "email", label: "Email" },
       // { key: "title", label: "Title" },
+      ...dates.map(date => ({ key: date, label: date })),
       { key: "totalLogged", label: "Total Logged Time" },
     ];
 
     const tableData = dept.assigned.map((empId) => {
       const emp = employeeMap[empId];
-      const time = timeData[empId] || { totalLogged: "-" };
-      return emp ? {
-        id: (
+      const time = timeData[empId] || { totalLogged: "-", daily: {} };
+      const row = {
+        // photo: <img src={emp.image_url} alt={emp.first_name} className="w-10 h-10 rounded-full" />,
+        name: (
           <a
             className="hover:underline"
             href="#"
@@ -259,21 +256,35 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
               handleEmployeeClick(emp.id);
             }}
           >
-            {emp.id}
+            {emp.first_name} {emp.last_name}
           </a>
         ),
-        // photo: <img src={emp.image_url} alt={emp.first_name} className="w-10 h-10 rounded-full" />,
-        name: `${emp.first_name} ${emp.last_name}`,
         email: emp.email,
         // title: emp.title || "—",
         totalLogged: timeLoadingDepts.has(dept.id) ? <Spinner /> : time.totalLogged,
-      } : null;
+      };
+      dates.forEach(date => {
+        row[date] = timeLoadingDepts.has(dept.id) ? <Spinner /> : (time.daily[date] || "0h 0m");
+      });
+      return emp ? row : null;
     }).filter(Boolean);
 
     const footer = [
       "Total",
       "",
-      "",
+      ...dates.map(date => {
+        const totalMins = dept.assigned.reduce((sum, empId) => {
+          const time = timeData[empId];
+          if (time && time.daily[date]) {
+            const parts = time.daily[date].split("h ");
+            const h = parseInt(parts[0]) || 0;
+            const m = parseInt(parts[1]?.replace("m", "")) || 0;
+            return sum + h * 60 + m;
+          }
+          return sum;
+        }, 0);
+        return totalMins > 0 ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m` : "-";
+      }),
       (() => {
         const totalLoggedMins = dept.assigned.reduce((sum, empId) => {
           const time = timeData[empId];

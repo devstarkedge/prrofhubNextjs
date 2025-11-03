@@ -33,34 +33,39 @@ export const downloadPDF = (
   totalLogged,
   totalEstimated
 ) => {
-  const doc = new jsPDF();
-  const body = [...tableData];
-  if (isSummary && totalLogged && totalEstimated) {
-    body.push(["Total", "", "", "", totalLogged, totalEstimated, ""]);
-  }
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const marginLeft = 14; 
-  const marginRight = 14; 
-  const availableWidth = pageWidth - marginLeft - marginRight;
-  const columnWidth = availableWidth / headers.length;
+  try {
+    const doc = new jsPDF();
+    const body = [...tableData];
+    if (isSummary && totalLogged && totalEstimated) {
+      body.push(["Total", "", "", "", totalLogged, totalEstimated, ""]);
+    }
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const marginLeft = 14;
+    const marginRight = 14;
+    const availableWidth = pageWidth - marginLeft - marginRight;
+    const columnWidth = availableWidth / headers.length;
 
-  autoTable(doc, {
-    head: [headers],
-    body,
-    columnStyles: headers.reduce((styles, _, index) => {
-      styles[index] = { cellWidth: columnWidth };
-      return styles;
-    }, {}),
-  });
-  const pdfBlob = doc.output('blob');
-  const url = URL.createObjectURL(pdfBlob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+    autoTable(doc, {
+      head: [headers],
+      body,
+      columnStyles: headers.reduce((styles, _, index) => {
+        styles[index] = { cellWidth: columnWidth };
+        return styles;
+      }, {}),
+    });
+    const pdfBlob = doc.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    alert("Failed to download PDF. Please try again.");
+  }
 };
 
 export const prepareTimeEntryExcelData = (timeEntries) => {
@@ -181,19 +186,24 @@ export const prepareTimeEntryPDFData = (timeEntries) => {
 export const prepareDepartmentSummaryExcelData = (
   deptAssigned,
   employeeMap,
-  timeData
+  timeData,
+  dates = []
 ) => {
   const data = deptAssigned.map((empId) => {
     const emp = employeeMap[empId];
     const time = timeData[empId] || {
       totalLogged: "-",
+      daily: {},
     };
-    return {
-      ID: emp.id,
+    const row = {
       Name: `${emp.first_name} ${emp.last_name}`,
       Email: emp.email,
-      "Total Logged Time": time.totalLogged,
     };
+    dates.forEach(date => {
+      row[date] = time.daily[date] || "0h 0m";
+    });
+    row["Total Logged Time"] = time.totalLogged;
+    return row;
   });
 
   const totalLoggedMins = deptAssigned.reduce((sum, empId) => {
@@ -207,15 +217,27 @@ export const prepareDepartmentSummaryExcelData = (
     return sum;
   }, 0);
 
-  data.push({
-    ID: "Total",
-    Name: "",
+  const totalRow = {
+    Name: "Total",
     Email: "",
-    "Total Logged Time":
-      totalLoggedMins > 0
-        ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m`
-        : "-",
+  };
+  dates.forEach(date => {
+    const totalMins = deptAssigned.reduce((sum, empId) => {
+      const time = timeData[empId];
+      if (time && time.daily[date]) {
+        const parts = time.daily[date].split("h ");
+        const h = parseInt(parts[0]) || 0;
+        const m = parseInt(parts[1]?.replace("m", "")) || 0;
+        return sum + h * 60 + m;
+      }
+      return sum;
+    }, 0);
+    totalRow[date] = totalMins > 0 ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m` : "-";
   });
+  totalRow["Total Logged Time"] = totalLoggedMins > 0
+    ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m`
+    : "-";
+  data.push(totalRow);
 
   return data;
 };
@@ -223,19 +245,24 @@ export const prepareDepartmentSummaryExcelData = (
 export const prepareDepartmentSummaryPDFData = (
   deptAssigned,
   employeeMap,
-  timeData
+  timeData,
+  dates = []
 ) => {
   const tableData = deptAssigned.map((empId) => {
     const emp = employeeMap[empId];
     const time = timeData[empId] || {
       totalLogged: "-",
+      daily: {},
     };
-    return [
-      emp.id,
+    const row = [
       `${emp.first_name} ${emp.last_name}`,
       emp.email,
-      time.totalLogged,
     ];
+    dates.forEach(date => {
+      row.push(time.daily[date] || "0h 0m");
+    });
+    row.push(time.totalLogged);
+    return row;
   });
 
   const totalLoggedMins = deptAssigned.reduce((sum, empId) => {
@@ -249,18 +276,33 @@ export const prepareDepartmentSummaryPDFData = (
     return sum;
   }, 0);
 
-  tableData.push([
+  const totalRow = [
     "Total",
     "",
-    "",
-    totalLoggedMins > 0
-      ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m`
-      : "-",
-  ]);
+  ];
+  dates.forEach(date => {
+    const totalMins = deptAssigned.reduce((sum, empId) => {
+      const time = timeData[empId];
+      if (time && time.daily[date]) {
+        const parts = time.daily[date].split("h ");
+        const h = parseInt(parts[0]) || 0;
+        const m = parseInt(parts[1]?.replace("m", "")) || 0;
+        return sum + h * 60 + m;
+      }
+      return sum;
+    }, 0);
+    totalRow.push(totalMins > 0 ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m` : "-");
+  });
+  totalRow.push(totalLoggedMins > 0
+    ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m`
+    : "-");
+  tableData.push(totalRow);
+
+  const headers = ["Name", "Email", ...dates, "Total Logged Time"];
 
   return {
     tableData,
-    headers: ["ID", "Name", "Email", "Total Logged Time"],
+    headers,
   };
 };
 

@@ -53,3 +53,11 @@ export const getDateRange = (filter) => {
       return null;
   }
 };
+
+export const getDaysBetween = (from, to) => {
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  const diffTime = Math.abs(toDate - fromDate);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
+  return diffDays;
+};

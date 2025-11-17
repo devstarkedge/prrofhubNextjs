@@ -16,7 +16,7 @@ function App() {
 
       <div className="flex gap-4 mb-6">
         <button
-          className={`px-4 py-2 rounded-md ${
+          className={`px-4 py-2 cursor-pointer rounded-md ${
             activeButton === "Employee"
               ? "bg-blue-500 text-white"
               : "bg-gray-200 text-black"
@@ -31,7 +31,7 @@ function App() {
           Employee
         </button>
         <button
-          className={`px-4 py-2 rounded-md ${
+          className={`px-4 py-2 cursor-pointer rounded-md ${
             activeButton === "Department"
               ? "bg-blue-500 text-white"
               : "bg-gray-200 text-black"

@@ -23,7 +23,7 @@ export const fetchTimeEntries = async (employeeId, from, to) => {
   if (!apiKey) return [];
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/alltime?from_date=${from}&to_date=${to}`,
+      `${API_BASE_URL}/alltime?from_date=${from}&to_date=${to}&user_id=${employeeId}`,
       {
         headers: {
           "Content-Type": "application/json",

@@ -6,7 +6,7 @@ export const fetchTimeEntries = async (employeeId, from, to) => {
   const apiKey = API_KEYS[employeeId];
   if (!apiKey) return [];
   const response = await axios.get(
-    `${API_BASE_URL}/alltime?from_date=${from}&to_date=${to}`,
+    `${API_BASE_URL}/alltime?from_date=${from}&to_date=${to}&user_id=${employeeId}`,
     {
       headers: {
         "Content-Type": "application/json",
@@ -16,7 +16,7 @@ export const fetchTimeEntries = async (employeeId, from, to) => {
   );
   const data = response.data || [];
 
-  console.log("data", data)
+  console.log("data", data);
   return data.filter((entry) => entry.by_me === true);
 };
 
@@ -47,7 +47,6 @@ export const fetchTodos = async (id, from, to) => {
   });
   const data = response.data || [];
 
-
   // Filter by assigned
   const assignedFiltered = data.filter((todo) => {
     return todo.assigned && todo.assigned.includes(id);
@@ -68,7 +67,12 @@ export const fetchTodos = async (id, from, to) => {
   return assignedFiltered;
 };
 
-export const fetchTaskEstimatedTime = async (projectId, todolistId, taskId, employeeId) => {
+export const fetchTaskEstimatedTime = async (
+  projectId,
+  todolistId,
+  taskId,
+  employeeId
+) => {
   const apiKey = API_KEYS[employeeId];
   if (!apiKey) return null;
   const response = await axios.get(
@@ -87,7 +91,13 @@ export const fetchTaskEstimatedTime = async (projectId, todolistId, taskId, empl
   };
 };
 
-export const fetchSubtaskEstimatedTime = async (projectId, todolistId, taskId, subtaskId, employeeId) => {
+export const fetchSubtaskEstimatedTime = async (
+  projectId,
+  todolistId,
+  taskId,
+  subtaskId,
+  employeeId
+) => {
   const apiKey = API_KEYS[employeeId];
   if (!apiKey) return null;
   const response = await axios.get(

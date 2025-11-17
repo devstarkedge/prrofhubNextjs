@@ -1,15 +1,29 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { getFormattedDate, getDateRange, getDaysBetween } from "../utils/dateUtils";
+import {
+  getFormattedDate,
+  getDateRange,
+  getDaysBetween,
+} from "../utils/dateUtils";
 import { API_BASE_URL, API_KEYS } from "../utils/constants";
 import { fetchTimeEntries, TimeEntry } from "../utils/apiUtils";
-import { prepareDepartmentSummaryExcelData, prepareDepartmentSummaryPDFData, downloadExcel, downloadPDF } from "../utils/downloadUtils";
+import {
+  prepareDepartmentSummaryExcelData,
+  prepareDepartmentSummaryPDFData,
+  downloadExcel,
+  downloadPDF,
+} from "../utils/downloadUtils";
 import Spinner from "../components/ui/Spinner";
 import DateFilter from "../components/ui/DateFilter";
 import DownloadDropdown from "../components/ui/DownloadDropdown";
 import DataTable from "../components/ui/DataTable";
 
-const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEmployee }) => {
+const DepartmentList = ({
+  setActiveButton,
+  setView,
+  setSelectedId,
+  setSelectedEmployee,
+}) => {
   const [departments, setDepartments] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -27,6 +41,18 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
 
   const initialFetchDoneRef = useRef(false);
 
+  const getColorClass = (timeStr) => {
+    if (!timeStr || timeStr === "0h 0m" || timeStr === "-")
+      return "text-red-500";
+    const parts = timeStr.split("h ");
+    const h = parseInt(parts[0]) || 0;
+    const m = parseInt(parts[1]?.replace("m", "")) || 0;
+    const totalMins = h * 60 + m;
+    if (totalMins < 480) return "text-red-500";
+    if (totalMins === 480) return "text-green-500";
+    return "text-yellow-500";
+  };
+
   const employeeMap = employees.reduce((map, emp) => {
     map[emp.id] = emp;
     return map;
@@ -36,7 +62,12 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
     setTimeLoadingDepts(new Set(departments.map((d) => d.id)));
     const promises = departments.map(async (dept) => {
       const { from, to } = deptDateRanges[dept.id];
-      await fetchTimeForDepartmentEmployees(dept.id, from, to, "Exact Date Range");
+      await fetchTimeForDepartmentEmployees(
+        dept.id,
+        from,
+        to,
+        "Exact Date Range"
+      );
     });
     await Promise.all(promises);
     setTimeLoadingDepts(new Set());
@@ -49,7 +80,9 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
       const initialFilters = {};
       departments.forEach((dept) => {
         initialRanges[dept.id] = {
-          from: getFormattedDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+          from: getFormattedDate(
+            new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+          ),
           to: getFormattedDate(new Date()),
         };
         initialFilters[dept.id] = "Exact Date Range";
@@ -117,11 +150,16 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
         filteredEntries.forEach((entry) => {
           entry.employeeId = empId;
           const emp = employeeMap[empId];
-          entry.employeeName = emp ? `${emp.first_name} ${emp.last_name}` : "Unknown";
+          entry.employeeName = emp
+            ? `${emp.first_name} ${emp.last_name}`
+            : "Unknown";
         });
         allEntries.push(...filteredEntries);
       } catch (error) {
-        console.error(`Error fetching detailed time entries for employee ${empId}`, error);
+        console.error(
+          `Error fetching detailed time entries for employee ${empId}`,
+          error
+        );
       }
     }
 
@@ -150,9 +188,17 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
       const daily = dailySummary[empId] || {};
       if (summary) {
         newTimeData[empId] = {
-          totalLogged: summary.loggedMins > 0 ? `${Math.floor(summary.loggedMins / 60)}h ${summary.loggedMins % 60}m` : "0h 0m",
+          totalLogged:
+            summary.loggedMins > 0
+              ? `${Math.floor(summary.loggedMins / 60)}h ${
+                  summary.loggedMins % 60
+                }m`
+              : "0h 0m",
           daily: Object.keys(daily).reduce((acc, date) => {
-            acc[date] = daily[date] > 0 ? `${Math.floor(daily[date] / 60)}h ${daily[date] % 60}m` : "0h 0m";
+            acc[date] =
+              daily[date] > 0
+                ? `${Math.floor(daily[date] / 60)}h ${daily[date] % 60}m`
+                : "0h 0m";
             return acc;
           }, {}),
         };
@@ -179,8 +225,17 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
         dates.push(getFormattedDate(new Date(d)));
       }
     }
-    const data = prepareDepartmentSummaryExcelData(dept.assigned, employeeMap, timeData, dates);
-    downloadExcel(data, `department_summary_${deptId}_${dateRange.from}_to_${dateRange.to}.xlsx`, "Department Summary");
+    const data = prepareDepartmentSummaryExcelData(
+      dept.assigned,
+      employeeMap,
+      timeData,
+      dates
+    );
+    downloadExcel(
+      data,
+      `${dept.name}_${dateRange.from}_to_${dateRange.to}.xlsx`,
+      "Department Summary"
+    );
     setDownloadLoading((prev) => {
       const newSet = new Set(prev);
       newSet.delete(deptId);
@@ -201,8 +256,21 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
         dates.push(getFormattedDate(new Date(d)));
       }
     }
-    const { tableData, headers } = prepareDepartmentSummaryPDFData(dept.assigned, employeeMap, timeData, dates);
-    downloadPDF(tableData, headers, `department_summary_${deptId}_${dateRange.from}_to_${dateRange.to}.pdf`);
+    const { tableData, headers } = prepareDepartmentSummaryPDFData(
+      dept.assigned,
+      employeeMap,
+      timeData,
+      dates
+    );
+    downloadPDF(
+      tableData,
+      headers,
+      `${dept.name}_${dateRange.from}_to_${dateRange.to}.pdf`,
+      false,
+      null,
+      null,
+      dept.name
+    );
     setDownloadLoading((prev) => {
       const newSet = new Set(prev);
       newSet.delete(deptId);
@@ -211,7 +279,7 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
   };
 
   const handleEmployeeClick = (empId) => {
-    const employee = employees.find(emp => emp.id === empId);
+    const employee = employees.find((emp) => emp.id === empId);
     setSelectedEmployee(employee);
     setActiveButton("Employee");
     setSelectedId(empId);
@@ -238,41 +306,62 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
       { key: "name", label: "Name" },
       { key: "email", label: "Email" },
       // { key: "title", label: "Title" },
-      ...dates.map(date => ({ key: date, label: date })),
+      ...dates.map((date) => ({ key: date, label: date })),
       { key: "totalLogged", label: "Total Logged Time" },
     ];
 
-    const tableData = dept.assigned.map((empId) => {
-      const emp = employeeMap[empId];
-      const time = timeData[empId] || { totalLogged: "-", daily: {} };
-      const row = {
-        // photo: <img src={emp.image_url} alt={emp.first_name} className="w-10 h-10 rounded-full" />,
-        name: (
-          <a
-            className="hover:underline"
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              handleEmployeeClick(emp.id);
-            }}
-          >
-            {emp.first_name} {emp.last_name}
-          </a>
-        ),
-        email: emp.email,
-        // title: emp.title || "—",
-        totalLogged: timeLoadingDepts.has(dept.id) ? <Spinner /> : time.totalLogged,
-      };
-      dates.forEach(date => {
-        row[date] = timeLoadingDepts.has(dept.id) ? <Spinner /> : (time.daily[date] || "0h 0m");
-      });
-      return emp ? row : null;
-    }).filter(Boolean);
+    const tableData = dept.assigned
+      .map((empId) => {
+        const emp = employeeMap[empId];
+        const time = timeData[empId] || { totalLogged: "-", daily: {} };
+        const row = {
+          // photo: <img src={emp.image_url} alt={emp.first_name} className="w-10 h-10 rounded-full" />,
+          name: (
+            <a
+              className="hover:underline"
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handleEmployeeClick(emp.id);
+              }}
+            >
+              {emp.first_name} {emp.last_name}
+            </a>
+          ),
+          email: (
+            <div className="relative inline-block group">
+              <span className="truncate max-w-[100px] inline-block cursor-pointer">
+                {emp.email}
+              </span>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap z-10 shadow-xl border border-white/20">
+                {emp.email}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-blue-600"></div>
+              </div>
+            </div>
+          ),
+          // title: emp.title || "—",
+          totalLogged: timeLoadingDepts.has(dept.id) ? (
+            <Spinner />
+          ) : (
+            time.totalLogged
+          ),
+        };
+        dates.forEach((date) => {
+          const dailyTime = time.daily[date] || "0h 0m";
+          row[date] = timeLoadingDepts.has(dept.id) ? (
+            <Spinner />
+          ) : (
+            <span className={getColorClass(dailyTime)}>{dailyTime}</span>
+          );
+        });
+        return emp ? row : null;
+      })
+      .filter(Boolean);
 
     const footer = [
       "Total",
       "",
-      ...dates.map(date => {
+      ...dates.map((date) => {
         const totalMins = dept.assigned.reduce((sum, empId) => {
           const time = timeData[empId];
           if (time && time.daily[date]) {
@@ -283,7 +372,11 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
           }
           return sum;
         }, 0);
-        return totalMins > 0 ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m` : "-";
+        const totalStr =
+          totalMins > 0
+            ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m`
+            : "-";
+        return <span>{totalStr}</span>;
       }),
       (() => {
         const totalLoggedMins = dept.assigned.reduce((sum, empId) => {
@@ -296,21 +389,36 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
           }
           return sum;
         }, 0);
-        return totalLoggedMins > 0 ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m` : "-";
+        const totalStr =
+          totalLoggedMins > 0
+            ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m`
+            : "-";
+        return <span>{totalStr}</span>;
       })(),
     ];
 
     return (
       <div key={dept.id} className="mb-8" ref={dropdownRef}>
-        <h3 className="text-xl font-semibold mb-4 flex items-center">
-          {dept.name}
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold ">
+            {dept.name}
+          </h3>
+
+          <span className="bg-green-100 text-green-600 text-sm font-semibold px-2 py-1 rounded-full ">
+            Employee Count: {dept.assigned.length}
+          </span>
+        </div>
         <div className="mb-4 flex justify-between">
           <div className="flex flex-wrap items-center gap-4">
             <DateFilter
-              selectedFilter={deptSelectedFilters[dept.id] || "Exact Date Range"}
+              selectedFilter={
+                deptSelectedFilters[dept.id] || "Exact Date Range"
+              }
               onFilterChange={(value) => {
-                setDeptSelectedFilters((prev) => ({ ...prev, [dept.id]: value }));
+                setDeptSelectedFilters((prev) => ({
+                  ...prev,
+                  [dept.id]: value,
+                }));
                 if (value !== "Exact Date Range") {
                   const range = getDateRange(value);
                   if (range) {
@@ -319,7 +427,12 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
                       [dept.id]: { from: range.from, to: range.to },
                     }));
                     setTimeLoadingDepts((prev) => new Set(prev).add(dept.id));
-                    fetchTimeForDepartmentEmployees(dept.id, range.from, range.to, value).then(() => {
+                    fetchTimeForDepartmentEmployees(
+                      dept.id,
+                      range.from,
+                      range.to,
+                      value
+                    ).then(() => {
                       setTimeLoadingDepts((prev) => {
                         const newSet = new Set(prev);
                         newSet.delete(dept.id);
@@ -337,7 +450,12 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
                 setApplyLoading((prev) => new Set(prev).add(dept.id));
                 setTimeLoadingDepts((prev) => new Set(prev).add(dept.id));
                 const { from, to } = deptDateRanges[dept.id];
-                await fetchTimeForDepartmentEmployees(dept.id, from, to, deptSelectedFilters[dept.id]);
+                await fetchTimeForDepartmentEmployees(
+                  dept.id,
+                  from,
+                  to,
+                  deptSelectedFilters[dept.id]
+                );
                 setApplyLoading((prev) => {
                   const newSet = new Set(prev);
                   newSet.delete(dept.id);
@@ -350,7 +468,11 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
                 });
               }}
               loading={applyLoading.has(dept.id)}
-              disabled={loading || timeLoadingDepts.has(dept.id) || applyLoading.has(dept.id)}
+              disabled={
+                loading ||
+                timeLoadingDepts.has(dept.id) ||
+                applyLoading.has(dept.id)
+              }
             />
           </div>
 
@@ -358,7 +480,7 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
             <DownloadDropdown
               onExcel={() => handleDownloadExcel(dept.id)}
               onPDF={() => handleDownloadPDF(dept.id)}
-              loading={isLoading || isTimeFetching}
+              loading={downloadLoading.has(dept.id) || timeLoadingDepts.has(dept.id)}
             />
           </div>
         </div>
@@ -369,6 +491,25 @@ const DepartmentList = ({ setActiveButton, setView, setSelectedId, setSelectedEm
 
   return (
     <div>
+      {!loading && (
+        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
+          <h4 className="text-lg font-semibold mb-2">Time Entry Color Legend</h4>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-green-500 rounded-full"></span>
+              <span className="text-sm">Green: Exactly 8 hours</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-yellow-500 rounded-full"></span>
+              <span className="text-sm">Yellow: More than 8 hours</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-red-500 rounded-full"></span>
+              <span className="text-sm">Red: Less than 8 hours</span>
+            </div>
+          </div>
+        </div>
+      )}
       {loading ? (
         <p>Loading departments, employees, and time data...</p>
       ) : (

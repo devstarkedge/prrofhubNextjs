@@ -185,10 +185,10 @@ const DepartmentList = ({
         const title = entry.timesheet.title.toLowerCase();
         let shortType = '';
         if (title.includes('full day leave')) {
-          shortType = 'FDL';
+          shortType = 'DL';
         } else if (title.includes('half day leave')) {
-          shortType = 'HDL';
-        } else if (title.includes('short day leave')) {
+          shortType = 'HL';
+        } else if (title.includes('short leave')) {
           shortType = 'SL';
         }
         if (shortType) {

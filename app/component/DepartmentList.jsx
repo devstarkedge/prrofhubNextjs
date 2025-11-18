@@ -29,6 +29,7 @@ const DepartmentList = ({
   const [loading, setLoading] = useState(false);
   const [timeData, setTimeData] = useState({});
   const [departmentTimeEntries, setDepartmentTimeEntries] = useState({});
+  const [leaveDays, setLeaveDays] = useState({});
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [downloadLoading, setDownloadLoading] = useState(new Set());
   const [applyLoading, setApplyLoading] = useState(new Set());
@@ -167,20 +168,49 @@ const DepartmentList = ({
 
     const timeSummary = {};
     const dailySummary = {};
+    const newLeaveDays = {};
     allEntries.forEach((entry) => {
       const empId = entry.employeeId;
       const date = entry.date; // Assuming entry has a 'date' field in YYYY-MM-DD format
       if (!timeSummary[empId]) {
         timeSummary[empId] = { loggedMins: 0 };
         dailySummary[empId] = {};
+        newLeaveDays[empId] = {};
       }
       const mins = (entry.logged_hours || 0) * 60 + (entry.logged_mins || 0);
-      timeSummary[empId].loggedMins += mins;
-      if (!dailySummary[empId][date]) {
-        dailySummary[empId][date] = 0;
+
+      // Check for leave entries
+      let isLeave = false;
+      if (entry.timesheet && entry.timesheet.title) {
+        const title = entry.timesheet.title.toLowerCase();
+        let shortType = '';
+        if (title.includes('full day leave')) {
+          shortType = 'DL';
+        } else if (title.includes('half day leave')) {
+          shortType = 'HL';
+        } else if (title.includes('short day leave')) {
+          shortType = 'SL';
+        }
+        if (shortType) {
+          isLeave = true;
+          const loggedStr = mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : "0h 0m";
+          newLeaveDays[empId][date] = {
+            type: shortType,
+            logged: loggedStr,
+          };
+        }
       }
-      dailySummary[empId][date] += mins;
+
+      // Only add to totals if not a leave entry
+      if (!isLeave) {
+        timeSummary[empId].loggedMins += mins;
+        if (!dailySummary[empId][date]) {
+          dailySummary[empId][date] = 0;
+        }
+        dailySummary[empId][date] += mins;
+      }
     });
+    setLeaveDays((prev) => ({ ...prev, ...newLeaveDays }));
 
     const newTimeData = {};
     dept.assigned.forEach((empId) => {
@@ -229,7 +259,8 @@ const DepartmentList = ({
       dept.assigned,
       employeeMap,
       timeData,
-      dates
+      dates,
+      leaveDays
     );
     downloadExcel(
       data,
@@ -260,7 +291,8 @@ const DepartmentList = ({
       dept.assigned,
       employeeMap,
       timeData,
-      dates
+      dates,
+      leaveDays
     );
     downloadPDF(
       tableData,
@@ -347,12 +379,29 @@ const DepartmentList = ({
           ),
         };
         dates.forEach((date) => {
-          const dailyTime = time.daily[date] || "0h 0m";
-          row[date] = timeLoadingDepts.has(dept.id) ? (
-            <Spinner />
-          ) : (
-            <span className={getColorClass(dailyTime)}>{dailyTime}</span>
-          );
+          const leave = leaveDays[empId] && leaveDays[empId][date];
+          if (leave) {
+            row[date] = timeLoadingDepts.has(dept.id) ? (
+              <Spinner />
+            ) : (
+              <div className="relative inline-block group">
+                <span className="truncate flex items-center justify-center max-w-[100px]  cursor-pointer font-semibold text-red-600 bg-red-100 h-[30px] w-[30px] rounded-full">
+                  {leave.type}
+                </span>
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap z-10 shadow-xl border border-white/20">
+                  {leave.logged}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-blue-600"></div>
+                </div>
+              </div>
+            );
+          } else {
+            const dailyTime = time.daily[date] || "0h 0m";
+            row[date] = timeLoadingDepts.has(dept.id) ? (
+              <Spinner />
+            ) : (
+              <span className={getColorClass(dailyTime)}>{dailyTime}</span>
+            );
+          }
         });
         return emp ? row : null;
       })

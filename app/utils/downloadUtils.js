@@ -28,6 +28,8 @@ export const downloadExcel = (
 const getPDFColorClass = (timeStr) => {
   if (!timeStr || timeStr === "0h 0m" || timeStr === "-")
     return [251, 44, 54]; // Red
+  if (timeStr === "DL" || timeStr === "HL" || timeStr === "SL")
+    return [251, 44, 54]; // Red for leave types
   const parts = timeStr.split("h ");
   const h = parseInt(parts[0]) || 0;
   const m = parseInt(parts[1]?.replace("m", "")) || 0;
@@ -58,7 +60,7 @@ export const downloadPDF = (
     const availableWidth = pageWidth - marginLeft - marginRight;
 
     // Add department name at the top if provided
-    let startY = 15;
+    let startY = 12;
     if (deptName) {
       doc.setFontSize(14);
       doc.text(deptName, pageWidth / 2, 15, { align: 'center' });
@@ -66,19 +68,19 @@ export const downloadPDF = (
       doc.text("Time Entry Color Legend", pageWidth / 2, 25, { align: 'center' });
       // Legend in single row with color dots
       const legendY = 32;
-      const startX = pageWidth / 2 - 60;
+      const startX = pageWidth/4  - 60;
       // Green
       doc.setFillColor(0, 201, 81);
       doc.circle(startX, legendY, 2, 'F');
       doc.text("Green: Exactly 8 hours", startX + 5, legendY + 1);
       // Yellow
       doc.setFillColor(240, 177, 0);
-      doc.circle(startX + 70, legendY, 2, 'F');
-      doc.text("Yellow: More than 8 hours", startX + 75, legendY + 1);
+      doc.circle(startX + 60, legendY, 2, 'F');
+      doc.text("Yellow: More than 8 hours", startX + 65, legendY + 1);
       // Red
       doc.setFillColor(251, 44, 54);
-      doc.circle(startX + 150, legendY, 2, 'F');
-      doc.text("Red: Less than 8 hours", startX + 155, legendY + 1);
+      doc.circle(startX + 130, legendY, 2, 'F');
+      doc.text("Red: Less than 8 hours, DL (Full Day Leave), HL (Half Day Leave), SL (Short Leave)", startX + 135, legendY + 1);
       startY = 45;
     }
 
@@ -265,7 +267,8 @@ export const prepareDepartmentSummaryExcelData = (
   deptAssigned,
   employeeMap,
   timeData,
-  dates = []
+  dates = [],
+  leaveDays = {}
 ) => {
   const data = deptAssigned.map((empId) => {
     const emp = employeeMap[empId];
@@ -278,7 +281,12 @@ export const prepareDepartmentSummaryExcelData = (
       Email: emp.email,
     };
     dates.forEach(date => {
-      row[date] = time.daily[date] || "0h 0m";
+      const leave = leaveDays[empId] && leaveDays[empId][date];
+      if (leave) {
+        row[date] = leave.type;
+      } else {
+        row[date] = time.daily[date] || "0h 0m";
+      }
     });
     row["Total Logged Time"] = time.totalLogged;
     return row;
@@ -324,7 +332,8 @@ export const prepareDepartmentSummaryPDFData = (
   deptAssigned,
   employeeMap,
   timeData,
-  dates = []
+  dates = [],
+  leaveDays = {}
 ) => {
   // Transpose: dates as rows, employees as columns
   const employeeNames = deptAssigned.map(empId => {
@@ -337,8 +346,13 @@ export const prepareDepartmentSummaryPDFData = (
   const tableData = dates.map(date => {
     const row = [date];
     deptAssigned.forEach(empId => {
-      const time = timeData[empId] || { daily: {} };
-      row.push(time.daily[date] || "0h 0m");
+      const leave = leaveDays[empId] && leaveDays[empId][date];
+      if (leave) {
+        row.push(leave.type);
+      } else {
+        const time = timeData[empId] || { daily: {} };
+        row.push(time.daily[date] || "0h 0m");
+      }
     });
     return row;
   });

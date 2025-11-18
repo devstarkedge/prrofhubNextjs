@@ -2,14 +2,33 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getFormattedDate, getDateRange } from "../utils/dateUtils";
 import { API_BASE_URL, API_KEYS } from "../utils/constants";
-import { fetchTodoCount, fetchTodos, TimeEntry, fetchTaskEstimatedTime, fetchSubtaskEstimatedTime } from "../utils/apiUtils";
+import {
+  fetchTodoCount,
+  fetchTodos,
+  TimeEntry,
+  fetchTaskEstimatedTime,
+  fetchSubtaskEstimatedTime,
+} from "../utils/apiUtils";
 import { useTimeEntries } from "../hooks/useTimeEntries";
-import { prepareTimeEntryExcelData, prepareTimeEntryPDFData, prepareTodoExcelData, prepareTodoPDFData, downloadExcel, downloadPDF } from "../utils/downloadUtils";
+import {
+  prepareTimeEntryExcelData,
+  prepareTimeEntryPDFData,
+  prepareTodoExcelData,
+  prepareTodoPDFData,
+  downloadExcel,
+  downloadPDF,
+} from "../utils/downloadUtils";
 import Spinner from "../components/ui/Spinner";
 import DateFilter from "../components/ui/DateFilter";
 import DownloadDropdown from "../components/ui/DownloadDropdown";
 
-const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmployee }) => {
+const EmployeeList = ({
+  view,
+  setView,
+  selectedId,
+  setSelectedId,
+  setSelectedEmployee,
+}) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [todoCounts, setTodoCounts] = useState({});
@@ -18,14 +37,20 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
   const pageSize = 10;
   const [totalPages, setTotalPages] = useState(0);
   const [selectedFilter, setSelectedFilter] = useState("Exact Date Range");
-  const [fromDate, setFromDate] = useState(getFormattedDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)));
+  const [fromDate, setFromDate] = useState(
+    getFormattedDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+  );
   const [toDate, setToDate] = useState(getFormattedDate(new Date()));
   const [applyLoading, setApplyLoading] = useState(false);
   const [todos, setTodos] = useState([]);
   const [loadingTodos, setLoadingTodos] = useState(false);
   const [estimatedTimes, setEstimatedTimes] = useState(new Map());
 
-  const { data: timeEntries, loading: loadingEntries, refetch } = useTimeEntries(selectedId, fromDate, toDate);
+  const {
+    data: timeEntries,
+    loading: loadingEntries,
+    refetch,
+  } = useTimeEntries(selectedId, fromDate, toDate);
 
   useEffect(() => {
     fetchEmployees();
@@ -104,7 +129,7 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
   const fetchEstimatedTimesForEntries = async () => {
     if (!timeEntries || timeEntries.length === 0) return;
     const newEstimatedTimes = new Map();
-    const validEntries = timeEntries.filter(entry => entry.project);
+    const validEntries = timeEntries.filter((entry) => entry.project);
     const promises = validEntries.map(async (entry) => {
       let key;
       let estimatedTime;
@@ -173,7 +198,7 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
   };
 
   const handleClick = (id) => {
-    const employee = employees.find(emp => emp.id === id);
+    const employee = employees.find((emp) => emp.id === id);
     setSelectedEmployee(employee);
     setSelectedId(id);
     setView("details");
@@ -192,22 +217,38 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
 
   const handleDownloadExcel = () => {
     const data = prepareTimeEntryExcelData(timeEntries || []);
-    downloadExcel(data, `time_entries_${selectedId}_${fromDate}_to_${toDate}.xlsx`, "Time Entries");
+    downloadExcel(
+      data,
+      `time_entries_${selectedId}_${fromDate}_to_${toDate}.xlsx`,
+      "Time Entries"
+    );
   };
 
   const handleDownloadPDF = () => {
     const { tableData, headers } = prepareTimeEntryPDFData(timeEntries || []);
-    downloadPDF(tableData, headers, `time_entries_${selectedId}_${fromDate}_to_${toDate}.pdf`);
+    downloadPDF(
+      tableData,
+      headers,
+      `time_entries_${selectedId}_${fromDate}_to_${toDate}.pdf`
+    );
   };
 
   const downloadTodoExcel = () => {
     const data = prepareTodoExcelData(todos || []);
-    downloadExcel(data, `todo_tasks_${selectedId}_${fromDate}_to_${toDate}.xlsx`, "Todo Tasks");
+    downloadExcel(
+      data,
+      `todo_tasks_${selectedId}_${fromDate}_to_${toDate}.xlsx`,
+      "Todo Tasks"
+    );
   };
 
   const downloadTodoPDF = () => {
     const { tableData, headers } = prepareTodoPDFData(todos || []);
-    downloadPDF(tableData, headers, `todo_tasks_${selectedId}_${fromDate}_to_${toDate}.pdf`);
+    downloadPDF(
+      tableData,
+      headers,
+      `todo_tasks_${selectedId}_${fromDate}_to_${toDate}.pdf`
+    );
   };
 
   if (view === "list") {
@@ -223,16 +264,24 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
               <tr>
                 <th className="w-1/6 px-4 py-3 border-b border-gray-300">ID</th>
                 {/* <th className="w-1/6 px-4 py-3 border-b border-gray-300">Photo</th> */}
-                <th className="w-1/4 px-4 py-3 border-b border-gray-300">Name</th>
-                <th className="w-1/4 px-4 py-3 border-b border-gray-300">Email</th>
-                <th className="w-1/6 px-4 py-3 border-b border-gray-300">Todo Count</th>
+                <th className="w-1/4 px-4 py-3 border-b border-gray-300">
+                  Name
+                </th>
+                <th className="w-1/4 px-4 py-3 border-b border-gray-300">
+                  Email
+                </th>
+                <th className="w-1/6 px-4 py-3 border-b border-gray-300">
+                  Todo Count
+                </th>
               </tr>
             </thead>
             <tbody>
               {currentEmployees.map((emp, index) => (
                 <tr
                   key={emp.id}
-                  className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-100 transition-colors duration-200`}
+                  className={`${
+                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                  } hover:bg-blue-100 transition-colors duration-200`}
                 >
                   <td className="w-1/6 px-4 py-2 border-b border-gray-200">
                     <a
@@ -281,9 +330,13 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
           >
             Previous
           </button>
-          <span className="mx-4">Page {currentPage} of {totalPages}</span>
+          <span className="mx-4">
+            Page {currentPage} of {totalPages}
+          </span>
           <button
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
             disabled={currentPage === totalPages}
             className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400"
           >
@@ -309,7 +362,7 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
             onChange={(e) => {
               const id = e.target.value ? parseInt(e.target.value) : null;
               if (id) {
-                const employee = employees.find(emp => emp.id === id);
+                const employee = employees.find((emp) => emp.id === id);
                 setSelectedEmployee(employee);
                 setSelectedId(id);
               } else {
@@ -338,7 +391,11 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
             loading={applyLoading}
           />
 
-          <DownloadDropdown onExcel={handleDownloadExcel} onPDF={handleDownloadPDF} loading={loadingEntries} />
+          <DownloadDropdown
+            onExcel={handleDownloadExcel}
+            onPDF={handleDownloadPDF}
+            loading={loadingEntries}
+          />
         </div>
 
         {loadingEntries ? (
@@ -349,31 +406,73 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
               <thead className="bg-gray-200 text-gray-900 font-semibold">
                 <tr>
                   <th className=" px-4 py-3 border-b border-gray-300">Date</th>
-                  <th className=" px-4 py-3 border-b border-gray-300">Task Name</th>
-                  <th className=" px-4 py-3 border-b border-gray-300">Subtask Name</th>
-                  <th className=" px-4 py-3 border-b border-gray-300">Project Name</th>
-                  <th className=" px-4 py-3 border-b border-gray-300">Logged</th>
-                  <th className=" px-4 py-3 border-b border-gray-300">Estimated</th>
-                  <th className=" py-3 border-b border-gray-300">Description</th>
+                  <th className=" px-4 py-3 border-b border-gray-300">
+                    Task Name
+                  </th>
+                  <th className=" px-4 py-3 border-b border-gray-300">
+                    Subtask Name
+                  </th>
+                  <th className=" px-4 py-3 border-b border-gray-300">
+                    Project Name
+                  </th>
+                  <th className=" px-4 py-3 border-b border-gray-300">
+                    Logged
+                  </th>
+                  <th className=" px-4 py-3 border-b border-gray-300">
+                    Estimated
+                  </th>
+                  <th className=" py-3 border-b border-gray-300">
+                    Description
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {timeEntries?.map((entry, index) => {
-                  if (!entry.project || !entry.task) {
-                    return null;
+                  // Check for leave entries first
+                  let isLeave = false;
+                  if (entry.timesheet && entry.timesheet.title) {
+                    const title = entry.timesheet.title.toLowerCase();
+
+                    console.log("titile", title);
+                    if (
+                      title.includes("full day leave") ||
+                      title.includes("half day leave") ||
+                      title.includes("short day leave")
+                    ) {
+                      isLeave = true;
+                    }
                   }
-                  const formattedDate = new Date(entry.date).toLocaleDateString();
-                  const projectUrl = `https://projects.starkedge.com/bappswift/#app/todos/project-${entry.project.id}`;
+
+                  console.log("leave", isLeave)
+
+                  if (!entry.project || !entry.task) {
+                    if (!isLeave) {
+                      return null;
+                    }
+                  }
+
+                  const formattedDate = new Date(
+                    entry.date
+                  ).toLocaleDateString();
+                  const projectUrl = entry.project
+                    ? `https://projects.starkedge.com/bappswift/#app/todos/project-${entry.project.id}`
+                    : null;
                   const taskUrl = entry.task
                     ? `https://projects.starkedge.com/bappswift/#app/todos/project-${entry.project.id}/list-${entry.task.list_id}/task-${entry.task.task_id}`
                     : null;
-                  const subtaskUrl = entry.task && entry.task.subtask_id
-                    ? `https://projects.starkedge.com/bappswift/#app/todos/project-${entry.project.id}/list-${entry.task.list_id}/task-${entry.task.subtask_id}`
-                    : null;
+                  const subtaskUrl =
+                    entry.task && entry.task.subtask_id
+                      ? `https://projects.starkedge.com/bappswift/#app/todos/project-${entry.project.id}/list-${entry.task.list_id}/task-${entry.task.subtask_id}`
+                      : null;
                   const loggedHours = entry.logged_hours || 0;
                   const loggedMins = entry.logged_mins || 0;
                   const totalLoggedMins = loggedHours * 60 + loggedMins;
-                  const loggedDisplay = totalLoggedMins > 0 ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m` : "-";
+                  const loggedDisplay =
+                    totalLoggedMins > 0
+                      ? `${Math.floor(totalLoggedMins / 60)}h ${
+                          totalLoggedMins % 60
+                        }m`
+                      : "-";
                   let key;
                   if (entry.task) {
                     key = entry.task.subtask_id
@@ -384,15 +483,29 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                   }
                   const estimatedTime = estimatedTimes.get(key);
                   const estimated = estimatedTime
-                    ? (estimatedTime.estimated_hours || 0) * 60 + (estimatedTime.estimated_mins || 0)
+                    ? (estimatedTime.estimated_hours || 0) * 60 +
+                      (estimatedTime.estimated_mins || 0)
                     : 0;
                   const description = entry.description || "-";
+
                   return (
-                    <tr key={index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
-                      <td className="px-4 py-2 border-b border-gray-200">{formattedDate}</td>
+                    <tr
+                      key={index}
+                      className={`${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } ${isLeave ? "!bg-red-100 " : ""}`}
+                    >
+                      <td className="px-4 py-2 border-b border-gray-200">
+                        {formattedDate}
+                      </td>
                       <td className="px-4 py-2 border-b border-gray-200">
                         {entry.task ? (
-                          <a className="hover:underline" href={taskUrl} target="_blank" rel="noreferrer">
+                          <a
+                            className="hover:underline"
+                            href={taskUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
                             {entry.task.task_name}
                           </a>
                         ) : (
@@ -401,7 +514,12 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                       </td>
                       <td className="px-4 py-2 border-b border-gray-200">
                         {entry.task && entry.task.subtask_name ? (
-                          <a className="hover:underline" href={subtaskUrl} target="_blank" rel="noreferrer">
+                          <a
+                            className="hover:underline"
+                            href={subtaskUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
                             {entry.task.subtask_name}
                           </a>
                         ) : (
@@ -409,29 +527,73 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                         )}
                       </td>
                       <td className="px-4 py-2 border-b border-gray-200">
-                        <a className="hover:underline" href={projectUrl} target="_blank" rel="noreferrer">
-                          {entry.project.name}
-                        </a>
+                        {entry.project ? (
+                          <a
+                            className="hover:underline"
+                            href={projectUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {entry.project.name}
+                          </a>
+                        ) : (
+                          "-"
+                        )}
                       </td>
-                      <td className="px-4 py-2 border-b border-gray-200">{loggedDisplay}</td>
                       <td className="px-4 py-2 border-b border-gray-200">
-                        {estimated > 0 ? `${Math.floor(estimated / 60)}h ${estimated % 60}m` : "-"}
+                        {loggedDisplay}
                       </td>
-                      <td className="max-w-[350px] break-words px-4 py-2 border-b border-gray-200">{description}</td>
+                      <td className="px-4 py-2 border-b border-gray-200">
+                        {estimated > 0
+                          ? `${Math.floor(estimated / 60)}h ${estimated % 60}m`
+                          : "-"}
+                      </td>
+                      <td className="max-w-[350px] break-words px-4 py-2 border-b border-gray-200">
+                        {description}
+                      </td>
                     </tr>
                   );
                 }) || null}
               </tbody>
               <tfoot className="bg-gray-100 font-semibold">
                 <tr>
-                  <td colSpan={4} className="px-4 py-2 border-t border-gray-300 text-right">Total:</td>
+                  <td
+                    colSpan={4}
+                    className="px-4 py-2 border-t border-gray-300 text-right"
+                  >
+                    Total:
+                  </td>
                   <td className="px-4 py-2 border-t border-gray-300">
                     {(() => {
-                      const totalLoggedMins = timeEntries?.reduce(
-                        (sum, entry) => sum + ((entry.logged_hours || 0) * 60 + (entry.logged_mins || 0)),
-                        0
-                      ) || 0;
-                      return totalLoggedMins > 0 ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m` : "-";
+                      const totalLoggedMins =
+                        timeEntries?.reduce((sum, entry) => {
+                          // Check for leave entries
+                          let isLeave = false;
+                          if (entry.timesheet && entry.timesheet.title) {
+                            const title = entry.timesheet.title.toLowerCase();
+                            if (
+                              title.includes("full day leave") ||
+                              title.includes("half day leave") ||
+                              title.includes("short day leave")
+                            ) {
+                              isLeave = true;
+                            }
+                          }
+                          // Only add if not leave
+                          if (!isLeave) {
+                            return (
+                              sum +
+                              ((entry.logged_hours || 0) * 60 +
+                                (entry.logged_mins || 0))
+                            );
+                          }
+                          return sum;
+                        }, 0) || 0;
+                      return totalLoggedMins > 0
+                        ? `${Math.floor(totalLoggedMins / 60)}h ${
+                            totalLoggedMins % 60
+                          }m`
+                        : "-";
                     })()}
                   </td>
                   <td className="px-4 py-2 border-t border-gray-300">
@@ -446,14 +608,20 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                           if (!uniqueTasks.has(taskKey)) {
                             const estimatedTime = estimatedTimes.get(key);
                             const estimatedMins = estimatedTime
-                              ? (estimatedTime.estimated_hours || 0) * 60 + (estimatedTime.estimated_mins || 0)
+                              ? (estimatedTime.estimated_hours || 0) * 60 +
+                                (estimatedTime.estimated_mins || 0)
                               : 0;
                             uniqueTasks.set(taskKey, estimatedMins);
                           }
                         }
                       });
-                      const totalMins = Array.from(uniqueTasks.values()).reduce((sum, mins) => sum + mins, 0);
-                      return totalMins > 0 ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m` : "-";
+                      const totalMins = Array.from(uniqueTasks.values()).reduce(
+                        (sum, mins) => sum + mins,
+                        0
+                      );
+                      return totalMins > 0
+                        ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m`
+                        : "-";
                     })()}
                   </td>
                   <td className="px-4 py-2 border-t border-gray-300"></td>
@@ -469,7 +637,11 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
           <>
             <div className="mt-6 mb-2 flex flex-wrap items-center justify-between gap-4">
               <h2 className="text-lg font-semibold">Due Tasks</h2>
-              <DownloadDropdown onExcel={downloadTodoExcel} onPDF={downloadTodoPDF} loading={loadingTodos} />
+              <DownloadDropdown
+                onExcel={downloadTodoExcel}
+                onPDF={downloadTodoPDF}
+                loading={loadingTodos}
+              />
             </div>
             <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
               <table className="min-w-full text-sm text-left text-gray-700 rounded-lg table-fixed">
@@ -477,10 +649,15 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                   <tr>
                     <th className="px-4 py-3 border-b border-gray-300">ID</th>
                     <th className="px-4 py-3 border-b border-gray-300">Name</th>
-                    <th className="px-4 py-3 border-b border-gray-300">Project</th>
-                    <th className="px-4 py-3 border-b border-gray-300">Logged</th>
-                    <th className="px-4 py-3 border-b border-gray-300">Due Date</th>
-
+                    <th className="px-4 py-3 border-b border-gray-300">
+                      Project
+                    </th>
+                    <th className="px-4 py-3 border-b border-gray-300">
+                      Logged
+                    </th>
+                    <th className="px-4 py-3 border-b border-gray-300">
+                      Due Date
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -488,28 +665,61 @@ const EmployeeList = ({ view, setView, selectedId, setSelectedId, setSelectedEmp
                     const loggedHours = todo.logged_hours || 0;
                     const loggedMins = todo.logged_mins || 0;
                     const totalLoggedMins = loggedHours * 60 + loggedMins;
-                    const loggedDisplay = totalLoggedMins > 0 ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m` : "-";
+                    const loggedDisplay =
+                      totalLoggedMins > 0
+                        ? `${Math.floor(totalLoggedMins / 60)}h ${
+                            totalLoggedMins % 60
+                          }m`
+                        : "-";
                     return (
-                      <tr key={todo.id || index} className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
-                        <td className="px-4 py-2 border-b border-gray-200">{todo.id || "-"}</td>
-                        <td className="px-4 py-2 border-b border-gray-200">{todo.title || "-"}</td>
-                        <td className="px-4 py-2 border-b border-gray-200">{todo.project?.name || "-"}</td>
-                        <td className="px-4 py-2 border-b border-gray-200">{loggedDisplay || "-"}</td>
-                        <td className="px-4 py-2 border-b border-gray-200">{todo.due_date || "-"}</td>
+                      <tr
+                        key={todo.id || index}
+                        className={`${
+                          index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                        }`}
+                      >
+                        <td className="px-4 py-2 border-b border-gray-200">
+                          {todo.id || "-"}
+                        </td>
+                        <td className="px-4 py-2 border-b border-gray-200">
+                          {todo.title || "-"}
+                        </td>
+                        <td className="px-4 py-2 border-b border-gray-200">
+                          {todo.project?.name || "-"}
+                        </td>
+                        <td className="px-4 py-2 border-b border-gray-200">
+                          {loggedDisplay || "-"}
+                        </td>
+                        <td className="px-4 py-2 border-b border-gray-200">
+                          {todo.due_date || "-"}
+                        </td>
                       </tr>
                     );
                   }) || null}
                 </tbody>
                 <tfoot className="bg-gray-100 font-semibold">
                   <tr>
-                    <td colSpan={4} className="px-4 py-2 border-t border-gray-300 text-right">Total:</td>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-2 border-t border-gray-300 text-right"
+                    >
+                      Total:
+                    </td>
                     <td className="px-4 py-2 border-t border-gray-300">
                       {(() => {
-                        const totalLoggedMins = todos?.reduce(
-                          (sum, todo) => sum + ((todo.logged_hours || 0) * 60 + (todo.logged_mins || 0)),
-                          0
-                        ) || 0;
-                        return totalLoggedMins > 0 ? `${Math.floor(totalLoggedMins / 60)}h ${totalLoggedMins % 60}m` : "-";
+                        const totalLoggedMins =
+                          todos?.reduce(
+                            (sum, todo) =>
+                              sum +
+                              ((todo.logged_hours || 0) * 60 +
+                                (todo.logged_mins || 0)),
+                            0
+                          ) || 0;
+                        return totalLoggedMins > 0
+                          ? `${Math.floor(totalLoggedMins / 60)}h ${
+                              totalLoggedMins % 60
+                            }m`
+                          : "-";
                       })()}
                     </td>
                   </tr>

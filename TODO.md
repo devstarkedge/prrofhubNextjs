@@ -1,3 +1,0 @@
-- [x] Edit downloadUtils.js to exclude "Date" column from coloring in PDF tables for department lists
-- [ ] Test PDF download to ensure dates are not colored
-- [x] Change filename in DepartmentList.jsx to include department name instead of department ID for PDF and Excel downloads

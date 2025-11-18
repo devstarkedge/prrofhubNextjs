@@ -61,3 +61,16 @@ export const getDaysBetween = (from, to) => {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
   return diffDays;
 };
+
+export const getWeekdaysBetween = (from, to) => {
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  const weekdays = [];
+  for (let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate() + 1)) {
+    const dayOfWeek = d.getDay(); // 0 = Sunday, 6 = Saturday
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      weekdays.push(getFormattedDate(new Date(d)));
+    }
+  }
+  return weekdays;
+};

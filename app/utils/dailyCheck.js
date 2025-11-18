@@ -41,6 +41,11 @@ export const fetchTimeEntries = async (employeeId, from, to) => {
 
 export const runDailyCheck = async () => {
   console.log("Starting daily time logging check...");
+  const dayOfWeek = moment().day(); 
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    console.log("Skipping daily check on weekend.");
+    return;
+  }
   const today = moment().format("YYYY-MM-DD");
   const employees = await fetchEmployees();
   for (const emp of employees) {
@@ -50,14 +55,14 @@ export const runDailyCheck = async () => {
         sum + (entry.logged_hours || 0) * 60 + (entry.logged_mins || 0),
       0
     );
-    const totalHours = totalMins / 60;
-    if (totalHours < 8) {
+    const totalHours = Math.floor(totalMins / 60);
+    const totalMinutes = totalMins % 60;
+    const totalTimeDisplay = `${totalHours}h ${totalMinutes}m`;
+    if (totalMins / 60 < 8) {
       const subject = `Daily Time Report for ${emp.first_name} ${emp.last_name} - ${today}`;
       const text = `Dear ${
         emp.first_name
-      },\n\nYou have logged ${totalHours.toFixed(
-        2
-      )} hours today (${today}). Please ensure you log at least 8 hours daily.\n\nDetailed Time Entries:\n${entries
+      },\n\nYou have logged ${totalTimeDisplay} today (${today}). Please ensure you log at least 8 hours daily.\n\nDetailed Time Entries:\n${entries
         .map(
           (entry) =>
             `- Task: ${entry.task?.task_name || "N/A"}, Project: ${
@@ -73,9 +78,7 @@ export const runDailyCheck = async () => {
           <h2>ProofHub - Daily Time Report</h2>
         </div>
         <p>Dear ${emp.first_name},</p>
-        <p>You have logged <strong>${totalHours.toFixed(
-          2
-        )} hours</strong> today (${today}). Please ensure you log at least 8 hours daily.</p>
+        <p>You have logged <strong>${totalTimeDisplay}</strong> today (${today}). Please ensure you log at least 8 hours daily.</p>
         <h3>Detailed Time Entries:</h3>
         <table border="1" style="border-collapse: collapse; width: 100%;">
           <thead>

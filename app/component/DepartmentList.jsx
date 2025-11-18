@@ -4,6 +4,7 @@ import {
   getFormattedDate,
   getDateRange,
   getDaysBetween,
+  getWeekdaysBetween,
 } from "../utils/dateUtils";
 import { API_BASE_URL, API_KEYS } from "../utils/constants";
 import { fetchTimeEntries, TimeEntry } from "../utils/apiUtils";
@@ -171,7 +172,7 @@ const DepartmentList = ({
     const newLeaveDays = {};
     allEntries.forEach((entry) => {
       const empId = entry.employeeId;
-      const date = entry.date; // Assuming entry has a 'date' field in YYYY-MM-DD format
+      const date = entry.date; 
       if (!timeSummary[empId]) {
         timeSummary[empId] = { loggedMins: 0 };
         dailySummary[empId] = {};
@@ -179,7 +180,6 @@ const DepartmentList = ({
       }
       const mins = (entry.logged_hours || 0) * 60 + (entry.logged_mins || 0);
 
-      // Check for leave entries
       let isLeave = false;
       if (entry.timesheet && entry.timesheet.title) {
         const title = entry.timesheet.title.toLowerCase();
@@ -201,7 +201,6 @@ const DepartmentList = ({
         }
       }
 
-      // Only add to totals if not a leave entry
       if (!isLeave) {
         timeSummary[empId].loggedMins += mins;
         if (!dailySummary[empId][date]) {
@@ -247,14 +246,7 @@ const DepartmentList = ({
     const dept = departments.find((d) => d.id === deptId);
     if (!dept) return;
     const dateRange = deptDateRanges[deptId] || { from: "", to: "" };
-    const dates = [];
-    if (dateRange.from && dateRange.to) {
-      const start = new Date(dateRange.from);
-      const end = new Date(dateRange.to);
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        dates.push(getFormattedDate(new Date(d)));
-      }
-    }
+    const dates = dateRange.from && dateRange.to ? getWeekdaysBetween(dateRange.from, dateRange.to) : [];
     const data = prepareDepartmentSummaryExcelData(
       dept.assigned,
       employeeMap,
@@ -279,14 +271,7 @@ const DepartmentList = ({
     const dept = departments.find((d) => d.id === deptId);
     if (!dept) return;
     const dateRange = deptDateRanges[deptId] || { from: "", to: "" };
-    const dates = [];
-    if (dateRange.from && dateRange.to) {
-      const start = new Date(dateRange.from);
-      const end = new Date(dateRange.to);
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        dates.push(getFormattedDate(new Date(d)));
-      }
-    }
+    const dates = dateRange.from && dateRange.to ? getWeekdaysBetween(dateRange.from, dateRange.to) : [];
     const { tableData, headers } = prepareDepartmentSummaryPDFData(
       dept.assigned,
       employeeMap,
@@ -323,15 +308,8 @@ const DepartmentList = ({
     const isLoading = downloadLoading.has(dept.id);
     const dateRange = deptDateRanges[dept.id] || { from: "", to: "" };
 
-    // Generate list of dates between from and to
-    const dates = [];
-    if (dateRange.from && dateRange.to) {
-      const start = new Date(dateRange.from);
-      const end = new Date(dateRange.to);
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        dates.push(getFormattedDate(new Date(d)));
-      }
-    }
+    // Generate list of weekdays between from and to
+    const dates = dateRange.from && dateRange.to ? getWeekdaysBetween(dateRange.from, dateRange.to) : [];
 
     const columns = [
       // { key: "photo", label: "Photo" },

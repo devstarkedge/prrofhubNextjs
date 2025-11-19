@@ -339,7 +339,7 @@ const DepartmentList = ({
             </a>
           ),
           email: (
-            <div className="relative inline-block group">
+            <div className="relative group w-full h-full">
               <span className="truncate max-w-[100px] inline-block cursor-pointer">
                 {emp.email}
               </span>
@@ -349,7 +349,7 @@ const DepartmentList = ({
               </div>
             </div>
           ),
-          // title: emp.title || "—",
+          
           totalLogged: timeLoadingDepts.has(dept.id) ? (
             <Spinner />
           ) : (
@@ -362,7 +362,7 @@ const DepartmentList = ({
             row[date] = timeLoadingDepts.has(dept.id) ? (
               <Spinner />
             ) : (
-              <div className="relative inline-block group">
+              <div className="relative group w-full h-full">
                 <span className="truncate flex items-center justify-center max-w-[100px]  cursor-pointer font-semibold text-red-600 bg-red-100 h-[30px] w-[30px] rounded-full">
                   {leave.type}
                 </span>

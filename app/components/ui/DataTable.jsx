@@ -32,7 +32,7 @@ const DataTable = ({ columns, data, onRowClick, footer }) => {
               {columns.map((col, colIndex) => (
                 <td
                   key={col.key}
-                  className={`px-4 py-2 whitespace-nowrap border-b border-gray-200 ${
+                  className={`relative px-4 py-2 whitespace-nowrap border-b border-gray-200 ${
                     colIndex === 0
                       ? "text-left"
                       : colIndex === columns.length - 1

@@ -362,7 +362,7 @@ const DepartmentList = ({
             row[date] = timeLoadingDepts.has(dept.id) ? (
               <Spinner />
             ) : (
-              <div className="relative group w-full h-full">
+              <div className="relative group w-full h-full flex justify-center items-center">
                 <span className="truncate flex items-center justify-center max-w-[100px]  cursor-pointer font-semibold text-red-600 bg-red-100 h-[30px] w-[30px] rounded-full">
                   {leave.type}
                 </span>

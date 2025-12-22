@@ -14,9 +14,13 @@ export const fetchTimeEntries = async (employeeId, from, to) => {
       },
     }
   );
-  const data = response.data || [];
+  const data = response.data;
 
-  console.log("data", data);
+  // console.log("data", data);
+  if (!Array.isArray(data)) {
+    console.warn(`fetchTimeEntries: Expected array but got ${typeof data}`, data);
+    return [];
+  }
   return data.filter((entry) => entry.by_me === true);
 };
 
@@ -29,7 +33,11 @@ export const fetchTodoCount = async (id) => {
       "X-API-KEY": apiKey,
     },
   });
-  const data = response.data || [];
+  const data = response.data;
+  if (!Array.isArray(data)) {
+    console.warn(`fetchTodoCount: Expected array but got ${typeof data}`, data);
+    return 0;
+  }
   const filtered = data.filter((todo) => {
     return todo.assigned && todo.assigned.includes(id);
   });
@@ -45,7 +53,12 @@ export const fetchTodos = async (id, from, to) => {
       "X-API-KEY": apiKey,
     },
   });
-  const data = response.data || [];
+  const data = response.data;
+
+  if (!Array.isArray(data)) {
+    console.warn(`fetchTodos: Expected array but got ${typeof data}`, data);
+    return [];
+  }
 
   // Filter by assigned
   const assignedFiltered = data.filter((todo) => {

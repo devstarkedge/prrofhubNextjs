@@ -1,4 +1,6 @@
-export const API_BASE_URL = "https://starkedge.proofhub.com/api/v3";
+export const API_BASE_URL = typeof window === 'undefined' 
+  ? "https://starkedge.proofhub.com/api/v3" 
+  : "/api/proxy";
 
 export const API_KEYS = {
   14149800188: "dbba14b68de285706cb40b9648fbb1d40087c174",

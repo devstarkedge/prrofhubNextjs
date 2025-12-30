@@ -148,7 +148,21 @@ const DepartmentList = ({
     for (const empId of dept.assigned) {
       try {
         const entries = await fetchTimeEntries(empId, from, to);
-        const filteredEntries = entries.filter((entry) => entry.by_me === true);
+
+        if (!Array.isArray(entries)) {
+          console.warn(
+            `Expected array for employee ${empId} time entries, got:`,
+            typeof entries,
+            entries
+          );
+          continue;
+        }
+
+        // apiUtils.fetchTimeEntries already filters by_me === true, but we can keep it safe or just use entries.
+        // The error was likely entries not being an array.
+        // We will treat entries as the source now.
+        const filteredEntries = entries;
+
         filteredEntries.forEach((entry) => {
           entry.employeeId = empId;
           const emp = employeeMap[empId];
@@ -172,7 +186,7 @@ const DepartmentList = ({
     const newLeaveDays = {};
     allEntries.forEach((entry) => {
       const empId = entry.employeeId;
-      const date = entry.date; 
+      const date = entry.date;
       if (!timeSummary[empId]) {
         timeSummary[empId] = { loggedMins: 0 };
         dailySummary[empId] = {};
@@ -183,17 +197,18 @@ const DepartmentList = ({
       let isLeave = false;
       if (entry.timesheet && entry.timesheet.title) {
         const title = entry.timesheet.title.toLowerCase();
-        let shortType = '';
-        if (title.includes('full day leave')) {
-          shortType = 'FL';
-        } else if (title.includes('half day leave')) {
-          shortType = 'HL';
-        } else if (title.includes('short leave')) {
-          shortType = 'SL';
+        let shortType = "";
+        if (title.includes("full day leave")) {
+          shortType = "FL";
+        } else if (title.includes("half day leave")) {
+          shortType = "HL";
+        } else if (title.includes("short leave")) {
+          shortType = "SL";
         }
         if (shortType) {
           isLeave = true;
-          const loggedStr = mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : "0h 0m";
+          const loggedStr =
+            mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : "0h 0m";
           newLeaveDays[empId][date] = {
             type: shortType,
             logged: loggedStr,
@@ -246,7 +261,10 @@ const DepartmentList = ({
     const dept = departments.find((d) => d.id === deptId);
     if (!dept) return;
     const dateRange = deptDateRanges[deptId] || { from: "", to: "" };
-    const dates = dateRange.from && dateRange.to ? getWeekdaysBetween(dateRange.from, dateRange.to) : [];
+    const dates =
+      dateRange.from && dateRange.to
+        ? getWeekdaysBetween(dateRange.from, dateRange.to)
+        : [];
     const data = prepareDepartmentSummaryExcelData(
       dept.assigned,
       employeeMap,
@@ -271,7 +289,10 @@ const DepartmentList = ({
     const dept = departments.find((d) => d.id === deptId);
     if (!dept) return;
     const dateRange = deptDateRanges[deptId] || { from: "", to: "" };
-    const dates = dateRange.from && dateRange.to ? getWeekdaysBetween(dateRange.from, dateRange.to) : [];
+    const dates =
+      dateRange.from && dateRange.to
+        ? getWeekdaysBetween(dateRange.from, dateRange.to)
+        : [];
     const { tableData, headers } = prepareDepartmentSummaryPDFData(
       dept.assigned,
       employeeMap,
@@ -309,7 +330,10 @@ const DepartmentList = ({
     const dateRange = deptDateRanges[dept.id] || { from: "", to: "" };
 
     // Generate list of weekdays between from and to
-    const dates = dateRange.from && dateRange.to ? getWeekdaysBetween(dateRange.from, dateRange.to) : [];
+    const dates =
+      dateRange.from && dateRange.to
+        ? getWeekdaysBetween(dateRange.from, dateRange.to)
+        : [];
 
     const columns = [
       // { key: "photo", label: "Photo" },
@@ -349,7 +373,7 @@ const DepartmentList = ({
               </div>
             </div>
           ),
-          
+
           totalLogged: timeLoadingDepts.has(dept.id) ? (
             <Spinner />
           ) : (
@@ -427,9 +451,7 @@ const DepartmentList = ({
     return (
       <div key={dept.id} className="mb-8" ref={dropdownRef}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold ">
-            {dept.name}
-          </h3>
+          <h3 className="text-xl font-semibold ">{dept.name}</h3>
 
           <span className="bg-green-100 text-green-600 text-sm font-semibold px-2 py-1 rounded-full ">
             Employee Count: {dept.assigned.length}
@@ -507,7 +529,9 @@ const DepartmentList = ({
             <DownloadDropdown
               onExcel={() => handleDownloadExcel(dept.id)}
               onPDF={() => handleDownloadPDF(dept.id)}
-              loading={downloadLoading.has(dept.id) || timeLoadingDepts.has(dept.id)}
+              loading={
+                downloadLoading.has(dept.id) || timeLoadingDepts.has(dept.id)
+              }
             />
           </div>
         </div>
@@ -520,7 +544,9 @@ const DepartmentList = ({
     <div>
       {!loading && (
         <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
-          <h4 className="text-lg font-semibold mb-2">Time Entry Color Legend</h4>
+          <h4 className="text-lg font-semibold mb-2">
+            Time Entry Color Legend
+          </h4>
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-green-500 rounded-full"></span>
@@ -532,7 +558,10 @@ const DepartmentList = ({
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-red-500 rounded-full"></span>
-              <span className="text-sm">Red: Less than 8 hours, FL (Full Day Leave), HL (Half Day Leave), SL (Short Leave)</span>
+              <span className="text-sm">
+                Red: Less than 8 hours, FL (Full Day Leave), HL (Half Day
+                Leave), SL (Short Leave)
+              </span>
             </div>
           </div>
         </div>
